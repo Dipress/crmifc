@@ -1,4 +1,4 @@
 SHELL := /bin/sh
 
 dev:
-	docker-compose -f kit/docker/docker-compose.yaml up
+	docker-compose -f internal/kit/docker/docker-compose.yml up

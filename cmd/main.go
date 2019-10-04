@@ -24,7 +24,7 @@ func main() {
 	var (
 		addr           = flag.String("addr", ":8080", "address of http server")
 		dsn            = flag.String("dsn", "", "postgres database DSN")
-		privateKeyFile = flag.String("key", "../internal/kit/keys/jwtRS256.key", "private key file path")
+		privateKeyFile = flag.String("key", "./internal/kit/keys/jwtRS256.key", "private key file path")
 		keyID          = flag.String("id", "123456", "private key id")
 	)
 	flag.Parse()
@@ -41,6 +41,11 @@ func main() {
 		if errors.Cause(err) != migrate.ErrNoChange {
 			log.Fatalf("failed to migrate schema: %v", err)
 		}
+	}
+
+	// Seed data.
+	if err := schema.Seed(db); err != nil {
+		log.Fatalf("failed to seeds data: %v", err)
 	}
 
 	// Authentication setup.
