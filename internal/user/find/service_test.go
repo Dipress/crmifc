@@ -3,9 +3,9 @@ package find
 import (
 	"context"
 	"errors"
-	"os/user"
 	"testing"
 
+	"github.com/dipress/crmifc/internal/user"
 	"github.com/stretchr/testify/assert"
 )
 

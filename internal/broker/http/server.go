@@ -100,46 +100,46 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	}
 
 	// User routes.
-	mux.HandleFunc("/users", user.HTTPHandler{
+	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
 		Handler: &userCreateHandler,
-	}.ServeHTTP).Methods(http.MethodPost)
+	}, authenticator).ServeHTTP).Methods(http.MethodPost)
 
-	mux.HandleFunc("/users/{id}", user.HTTPHandler{
+	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
 		Handler: &userFindHandler,
-	}.ServeHTTP).Methods(http.MethodGet)
+	}, authenticator).ServeHTTP).Methods(http.MethodGet)
 
-	mux.HandleFunc("/users/{id}", user.HTTPHandler{
+	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
 		Handler: &userUpdateHandler,
-	}.ServeHTTP).Methods(http.MethodPut)
+	}, authenticator).ServeHTTP).Methods(http.MethodPut)
 
-	mux.HandleFunc("/users/{id}", user.HTTPHandler{
+	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
 		Handler: &userDeleteHandler,
-	}.ServeHTTP).Methods(http.MethodDelete)
+	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
 
-	mux.HandleFunc("/users", user.HTTPHandler{
+	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
 		Handler: &userListHandler,
-	}.ServeHTTP).Methods(http.MethodGet)
+	}, authenticator).ServeHTTP).Methods(http.MethodGet)
 
 	// Role routes.
-	mux.HandleFunc("/roles", role.HTTPHandler{
+	mux.HandleFunc("/roles", AuthMiddleware(role.HTTPHandler{
 		Handler: &roleCreateHandler,
-	}.ServeHTTP).Methods(http.MethodPost)
+	}, authenticator).ServeHTTP).Methods(http.MethodPost)
 
-	mux.HandleFunc("/roles/{id}", role.HTTPHandler{
+	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
 		Handler: &roleFindHandler,
-	}.ServeHTTP).Methods(http.MethodGet)
+	}, authenticator).ServeHTTP).Methods(http.MethodGet)
 
-	mux.HandleFunc("/roles/{id}", role.HTTPHandler{
+	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
 		Handler: &roleUpdateHandler,
-	}.ServeHTTP).Methods(http.MethodPut)
+	}, authenticator).ServeHTTP).Methods(http.MethodPut)
 
-	mux.HandleFunc("/roles/{id}", role.HTTPHandler{
+	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
 		Handler: &roleDeleteHandler,
-	}.ServeHTTP).Methods(http.MethodDelete)
+	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
 
-	mux.HandleFunc("/roles", role.HTTPHandler{
+	mux.HandleFunc("/roles", AuthMiddleware(role.HTTPHandler{
 		Handler: &roleListHandler,
-	}.ServeHTTP).Methods(http.MethodGet)
+	}, authenticator).ServeHTTP).Methods(http.MethodGet)
 
 	s := http.Server{
 		Addr:         addr,

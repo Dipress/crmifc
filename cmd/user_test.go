@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/dipress/crmifc/internal/kit/auth"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/user"
@@ -19,6 +21,18 @@ func TestUserCreate(t *testing.T) {
 	{
 		db, teardown := postgresDB(t)
 		defer teardown()
+
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
+
+		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
 
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
@@ -43,6 +57,7 @@ func TestUserCreate(t *testing.T) {
 				strings.NewReader(userStr),
 			)
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -93,6 +108,15 @@ func TestFindUser(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
+		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
@@ -105,9 +129,13 @@ func TestFindUser(t *testing.T) {
 		t.Log("\ttest:0\tshould find a user.")
 		{
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/users/%d", s.Addr, user.ID), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -153,6 +181,15 @@ func TestUpdateUser(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
+		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
@@ -172,6 +209,7 @@ func TestUpdateUser(t *testing.T) {
 			}`
 			req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://%s/users/%d", s.Addr, user.ID), strings.NewReader(userStr))
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -222,6 +260,15 @@ func TestDeleteUser(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
+		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
@@ -235,6 +282,7 @@ func TestDeleteUser(t *testing.T) {
 		{
 			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://%s/users/%d", s.Addr, user.ID), nil)
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -296,6 +344,15 @@ func TestListUser(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
+		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
@@ -307,9 +364,13 @@ func TestListUser(t *testing.T) {
 		t.Log("\ttest:0\tshould show all users.")
 		{
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/users", s.Addr), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)

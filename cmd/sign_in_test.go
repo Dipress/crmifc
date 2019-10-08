@@ -47,12 +47,14 @@ func TestSignIn(t *testing.T) {
 		t.Log("\ttest:0\tshould authenticate a user.")
 		{
 			authStr := `{"email": "username6@example.com", "password": "password123"}`
-			auth, err := http.NewRequest("POST", fmt.Sprintf("http://%s/signin", s.Addr), strings.NewReader(authStr))
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/signin", s.Addr), strings.NewReader(authStr))
+			req.Header.Set("Content-Type", "application/json")
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			resp, err := http.DefaultClient.Do(auth)
+			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
