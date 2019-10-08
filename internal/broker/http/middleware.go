@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"os/user"
 	"strings"
 
 	"github.com/dipress/crmifc/internal/kit/auth"
@@ -53,16 +52,4 @@ func parseAuthHeader(bearerStr string) (string, error) {
 	}
 
 	return split[1], nil
-}
-
-// Repository allows working with a database.
-type Repository interface {
-	FindByEmail(ctx context.Context, email string, usr *user.User) error
-}
-
-// PermissionMiddleware represents middleware with permissions.
-func PermissionMiddleware(next http.Handler, r Repository) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-	})
 }
