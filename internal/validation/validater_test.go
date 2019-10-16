@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/user"
 )
@@ -180,5 +181,69 @@ func TestUserValidate(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+func TestCategoryValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		form    category.Form
+		wantErr bool
+		expect  Errors
+	}{
+		{
+			name: "ok",
+			form: category.Form{
+				Name: "Real IPs",
+			},
+		},
+		{
+			name:    "blank name",
+			form:    category.Form{},
+			wantErr: true,
+			expect: Errors{
+				"name": "cannot be blank",
+			},
+		},
+		{
+			name: "long name",
+			form: category.Form{
+				Name: "This is long name for category, this title is way larger is allowed one.",
+			},
+			wantErr: true,
+			expect: Errors{
+				"name": "the length must be between 1 and 50",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			var c Category
+			err := c.Validate(ctx, &tc.form)
+			if tc.wantErr {
+				got, ok := err.(Errors)
+				if !ok {
+					t.Errorf("unknown error: %v", err)
+					return
+				}
+
+				if !reflect.DeepEqual(tc.expect, got) {
+					t.Errorf("expected: %+#v got: %+#v", tc.expect, got)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+
 	}
 }

@@ -10,8 +10,10 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/dipress/crmifc/internal/auth"
+	"github.com/dipress/crmifc/internal/broker/http/category"
 	"github.com/dipress/crmifc/internal/broker/http/role"
 	"github.com/dipress/crmifc/internal/broker/http/user"
+	categoryCreate "github.com/dipress/crmifc/internal/category/create"
 	authEng "github.com/dipress/crmifc/internal/kit/auth"
 	roleCreate "github.com/dipress/crmifc/internal/role/create"
 	roleDelete "github.com/dipress/crmifc/internal/role/delete"
@@ -46,6 +48,8 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	userUpdateService := userUpdate.NewService(repo, &validation.User{})
 	userDeleteService := userDelete.NewService(repo)
 	userListService := userList.NewService(repo)
+
+	categoryCreateService := categoryCreate.NewService(repo, &validation.Category{})
 
 	// Auth handler.
 	authenticateHandler := user.AuthHandler{
@@ -98,6 +102,16 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	roleListHandler := role.ListHanlder{
 		Lister: roleListService,
 	}
+
+	// Category handlers.
+	categoryCreateHandler := category.CreateHandler{
+		Creater: categoryCreateService,
+	}
+
+	// Category routes.
+	mux.HandleFunc("/categories", AuthMiddleware(role.HTTPHandler{
+		Handler: &categoryCreateHandler,
+	}, authenticator).ServeHTTP).Methods(http.MethodPost)
 
 	// User routes.
 	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
