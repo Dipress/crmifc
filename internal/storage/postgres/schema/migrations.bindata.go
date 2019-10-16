@@ -4,6 +4,10 @@
 // migrations/1565894792_users.up.sql
 // migrations/1569158364_roles.down.sql
 // migrations/1569158364_roles.up.sql
+// migrations/1570866542_pages.down.sql
+// migrations/1570866542_pages.up.sql
+// migrations/1571140600_categories.down.sql
+// migrations/1571140600_categories.up.sql
 // DO NOT EDIT!
 
 package schema
@@ -151,6 +155,86 @@ func _1569158364_rolesUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __1570866542_pagesDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x28\x48\x4c\x4f\x2d\xb6\xe6\x02\x04\x00\x00\xff\xff\x5d\xb2\x15\x0c\x1c\x00\x00\x00")
+
+func _1570866542_pagesDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__1570866542_pagesDownSql,
+		"1570866542_pages.down.sql",
+	)
+}
+
+func _1570866542_pagesDownSql() (*asset, error) {
+	bytes, err := _1570866542_pagesDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "1570866542_pages.down.sql", size: 28, mode: os.FileMode(420), modTime: time.Unix(1571144203, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __1570866542_pagesUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x9c\xce\x41\x4b\xc3\x40\x10\x05\xe0\xf3\xcc\xaf\x98\x63\x5b\x0a\x05\xa1\x27\x4f\x63\x9c\xe2\xe2\x26\x96\xc9\x44\xda\x53\x58\xbb\x4b\x59\xb0\x34\x24\xeb\xa1\xff\x5e\xf4\x50\xcc\xd5\xf3\x7b\xdf\xe3\x55\x2a\x6c\x42\xc6\x4f\x5e\xc8\xed\xa8\x79\x33\x92\x83\x6b\xad\xa5\x21\x9c\xd3\x44\x0b\x84\x1c\xa1\x15\x75\xec\x69\xaf\xae\x66\x3d\xd2\xab\x1c\xd7\x08\x5f\x53\x1a\xfb\x1c\xc1\x35\xf6\xeb\x9a\xce\xfb\x35\x42\xc9\xe5\x33\xc1\x3b\x6b\xf5\xc2\x4a\x8b\x87\xed\x76\xf9\x37\xfe\xb8\xc6\x1b\x98\x1c\x66\xe6\x14\x4a\x3a\x5f\xc7\x5b\x9f\x23\xcd\xe7\x10\x36\x2b\x2a\xf9\x92\xa6\x12\x2e\x03\xad\x36\x08\xa7\x31\x85\x92\x62\x1f\x0a\x98\xab\xa5\x35\xae\xf7\x77\x41\xcf\xb2\xe3\xce\x1b\x55\x9d\xaa\x34\xd6\xdf\x2b\x3f\x8f\x87\xf8\x1f\x89\xcb\x47\xc4\xef\x00\x00\x00\xff\xff\xc2\x7c\xd4\xb5\x2a\x01\x00\x00")
+
+func _1570866542_pagesUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__1570866542_pagesUpSql,
+		"1570866542_pages.up.sql",
+	)
+}
+
+func _1570866542_pagesUpSql() (*asset, error) {
+	bytes, err := _1570866542_pagesUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "1570866542_pages.up.sql", size: 298, mode: os.FileMode(420), modTime: time.Unix(1571144203, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __1571140600_categoriesDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x48\x4e\x2c\x49\x4d\xcf\x2f\xca\x4c\x2d\xb6\xe6\x02\x04\x00\x00\xff\xff\xfd\xee\x8d\x6a\x21\x00\x00\x00")
+
+func _1571140600_categoriesDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__1571140600_categoriesDownSql,
+		"1571140600_categories.down.sql",
+	)
+}
+
+func _1571140600_categoriesDownSql() (*asset, error) {
+	bytes, err := _1571140600_categoriesDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "1571140600_categories.down.sql", size: 33, mode: os.FileMode(420), modTime: time.Unix(1571144203, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __1571140600_categoriesUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x9c\xcc\xb1\x4e\xc3\x30\x10\x80\xe1\xf9\xee\x29\x6e\x6c\xab\x48\x65\x61\x62\x3a\xc2\x55\x58\x38\xa6\x9c\xcf\x88\x4e\x91\x95\x58\x28\x43\x20\x4a\xcc\xfb\x23\x31\xe4\x01\xd8\xff\xef\x6f\x55\xd8\x84\x8c\x1f\xbd\x90\xbb\x50\x78\x35\x92\x0f\x17\x2d\xd2\x90\x6b\xf9\xfc\x5e\xa7\xb2\xd1\x01\x61\x1a\x21\x8a\x3a\xf6\x74\x55\xd7\xb1\xde\xe8\x45\x6e\x0d\xc2\x57\x9e\x0b\xbc\xb3\xb6\xcf\xac\x74\xb8\xbf\x3b\x52\x0a\xee\x2d\xc9\xdf\x29\x24\xef\x1b\x44\x38\x9f\xa8\x4e\x73\xd9\x6a\x9e\x17\x3a\x9d\x11\x86\xb5\xe4\x5a\xc6\x3e\x57\x30\xd7\x49\x34\xee\xae\xbb\xa0\x27\xb9\x70\xf2\x46\x6d\x52\x95\x60\xfd\x9e\x34\x08\x3f\xcb\xf8\x1f\x89\xc7\x07\xfc\x0d\x00\x00\xff\xff\xba\x6b\x98\x19\xec\x00\x00\x00")
+
+func _1571140600_categoriesUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__1571140600_categoriesUpSql,
+		"1571140600_categories.up.sql",
+	)
+}
+
+func _1571140600_categoriesUpSql() (*asset, error) {
+	bytes, err := _1571140600_categoriesUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "1571140600_categories.up.sql", size: 236, mode: os.FileMode(420), modTime: time.Unix(1571163793, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -207,6 +291,10 @@ var _bindata = map[string]func() (*asset, error){
 	"1565894792_users.up.sql": _1565894792_usersUpSql,
 	"1569158364_roles.down.sql": _1569158364_rolesDownSql,
 	"1569158364_roles.up.sql": _1569158364_rolesUpSql,
+	"1570866542_pages.down.sql": _1570866542_pagesDownSql,
+	"1570866542_pages.up.sql": _1570866542_pagesUpSql,
+	"1571140600_categories.down.sql": _1571140600_categoriesDownSql,
+	"1571140600_categories.up.sql": _1571140600_categoriesUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -253,6 +341,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"1565894792_users.up.sql": &bintree{_1565894792_usersUpSql, map[string]*bintree{}},
 	"1569158364_roles.down.sql": &bintree{_1569158364_rolesDownSql, map[string]*bintree{}},
 	"1569158364_roles.up.sql": &bintree{_1569158364_rolesUpSql, map[string]*bintree{}},
+	"1570866542_pages.down.sql": &bintree{_1570866542_pagesDownSql, map[string]*bintree{}},
+	"1570866542_pages.up.sql": &bintree{_1570866542_pagesUpSql, map[string]*bintree{}},
+	"1571140600_categories.down.sql": &bintree{_1571140600_categoriesDownSql, map[string]*bintree{}},
+	"1571140600_categories.up.sql": &bintree{_1571140600_categoriesUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory

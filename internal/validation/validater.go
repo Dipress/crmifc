@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-ozzo/ozzo-validation/is"
 
+	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/user"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -77,5 +78,25 @@ func (u *User) Validate(ctx context.Context, form *user.Form) error {
 	if len(ves) > 0 {
 		return ves
 	}
+	return nil
+}
+
+// Category holds form validations.
+type Category struct{}
+
+// Validate validates category form.
+func (c *Category) Validate(ctx context.Context, form *category.Form) error {
+	ves := make(Errors)
+
+	if err := validation.Validate(form.Name,
+		validation.Required,
+		validation.Length(1, 50)); err != nil {
+		ves["name"] = err.Error()
+	}
+
+	if len(ves) > 0 {
+		return ves
+	}
+
 	return nil
 }
