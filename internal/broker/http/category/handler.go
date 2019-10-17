@@ -5,10 +5,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/dipress/crmifc/internal/broker/http/response"
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/validation"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
@@ -34,10 +36,17 @@ type Creater interface {
 	Create(ctx context.Context, f *category.Form) (*category.Category, error)
 }
 
+// Finder abstraction for find service.
+type Finder interface {
+	Find(ctx context.Context, id int) (*category.Category, error)
+}
+
+// CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
 }
 
+// Handle implements Handler interface.
 func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	var f category.Form
 
@@ -61,6 +70,42 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	data, err = category.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(err, "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(err, "write response")
+	}
+
+	return nil
+}
+
+// FindHandler for find requests.
+type FindHandler struct {
+	Finder
+}
+
+// Handle implements Handler interface.
+func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+	}
+
+	cat, err := h.Finder.Find(r.Context(), id)
+	if err != nil {
+		switch errors.Cause(err) {
+		case category.ErrNotFound:
+			return errors.Wrap(response.NotFoundResponse(w), "find")
+		default:
+			return errors.Wrap(response.InternalServerErrorResponse(w), "find")
+		}
+	}
+
+	data, err := cat.MarshalJSON()
 	if err != nil {
 		return errors.Wrap(err, "marshal json")
 	}

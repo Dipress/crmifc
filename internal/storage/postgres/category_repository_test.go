@@ -29,3 +29,34 @@ func TestCreateCategory(t *testing.T) {
 		t.Error("expected to parse returned id")
 	}
 }
+
+func TestFindCategory(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		t.Parallel()
+
+		r := NewRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		nc := category.NewCategory{
+			Name: "IP Fake",
+		}
+
+		var cat category.Category
+		err := r.CreateCategory(ctx, &nc, &cat)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		t.Log("\ttest:0\tshould find the category into the database")
+		{
+			_, err := r.FindCategory(ctx, cat.ID)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+		}
+	}
+}
