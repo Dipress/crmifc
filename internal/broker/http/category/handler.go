@@ -41,6 +41,10 @@ type Finder interface {
 	Find(ctx context.Context, id int) (*category.Category, error)
 }
 
+// Updater abstraction for update service.
+type Updater interface {
+	Update(ctx context.Context, id int, f *category.Form) (*category.Category, error)
+}
 // CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
@@ -114,5 +118,50 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "write response")
 	}
 
+	return nil
+}
+
+// UpdateHandler for find requests.
+type UpdateHandler struct {
+	Updater
+}
+
+// Handle implements Handler interface.
+func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	var f category.Form
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+	}
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return errors.Wrap(response.BadRequestResponse(w), "read body")
+	}
+
+	if err := f.UnmarshalJSON(data); err != nil {
+		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
+	}
+
+	cat, err := h.Updater.Update(r.Context(), id, &f)
+	if err != nil {
+		switch v := errors.Cause(err).(type) {
+		case validation.Errors:
+			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
+		default:
+			return errors.Wrap(response.InternalServerErrorResponse(w), "update")
+		}
+	}
+
+	data, err = cat.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(err, "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(err, "write response")
+	}
 	return nil
 }

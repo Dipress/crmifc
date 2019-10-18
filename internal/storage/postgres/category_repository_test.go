@@ -60,3 +60,35 @@ func TestFindCategory(t *testing.T) {
 		}
 	}
 }
+
+func TestCategoryUpdate(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		r := NewRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		nc := category.NewCategory{
+			Name: "Channels",
+		}
+
+		var cat category.Category
+		err := r.CreateCategory(ctx, &nc, &cat)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		t.Log("\ttest:0\tshould update the category into the database")
+		{
+			cat.Name = "Region Channels"
+			err := r.UpdateCategory(ctx, 1, &cat)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		}
+	}
+}
