@@ -49,7 +49,7 @@ func TestCreateHandler(t *testing.T) {
 			h := CreateHandler{createFunc(tc.createFunc)}
 			w := httptest.NewRecorder()
 
-			r := httptest.NewRequest("POST", "http://example.com", strings.NewReader("{}"))
+			r := httptest.NewRequest(http.MethodPost, "http://example.com", strings.NewReader("{}"))
 
 			err := h.Handle(w, r)
 			if w.Code != tc.code {
@@ -93,7 +93,7 @@ func TestFindHandler(t *testing.T) {
 			t.Parallel()
 			h := FindHandler{findFunc(tc.findFunc)}
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "http://example.com", strings.NewReader("{}"))
+			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
 
 			err := h.Handle(w, r)
@@ -145,7 +145,7 @@ func TestUpdateHandler(t *testing.T) {
 			t.Parallel()
 			h := UpdateHandler{updateFunc(tc.updateFunc)}
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("PUT", "http://example.com", strings.NewReader("{}"))
+			r := httptest.NewRequest(http.MethodPut, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
 
 			err := h.Handle(w, r)
@@ -190,7 +190,7 @@ func TestDeleteHandler(t *testing.T) {
 			t.Parallel()
 			h := DeleteHandler{deleteFunc(tc.deleteFunc)}
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("PUT", "http://example.com", strings.NewReader("{}"))
+			r := httptest.NewRequest(http.MethodDelete, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
 
 			err := h.Handle(w, r)
@@ -235,7 +235,7 @@ func TestListHandler(t *testing.T) {
 			t.Parallel()
 			h := ListHanlder{listFunc(tc.listFunc)}
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "http://example.com", strings.NewReader("{}"))
+			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
 
 			err := h.Handle(w, r)
 			if w.Code != tc.code {

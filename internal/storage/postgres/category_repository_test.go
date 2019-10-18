@@ -92,3 +92,33 @@ func TestCategoryUpdate(t *testing.T) {
 		}
 	}
 }
+
+func TestCategoryDelete(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		r := NewRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		nc := category.NewCategory{
+			Name: "Airmax",
+		}
+
+		var cat category.Category
+		err := r.CreateCategory(ctx, &nc, &cat)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		t.Log("\ttest:0\tshould delete the category into the database")
+		{
+			err := r.DeleteCategory(ctx, 1)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		}
+	}
+}
