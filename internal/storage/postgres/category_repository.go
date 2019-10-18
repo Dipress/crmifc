@@ -57,6 +57,30 @@ func (r *Repository) UpdateCategory(ctx context.Context, id int, cat *category.C
 		if err == sql.ErrNoRows {
 			return category.ErrNotFound
 		}
+
+		return errors.Wrap(err, "exec context")
+	}
+
+	return nil
+}
+
+const deleteCategoryQuery = `DELETE FROM categories WHERE id=:id`
+
+// DeleteCategory deletes category by id.
+func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
+	stmt, err := r.db.PrepareNamed(deleteCategoryQuery)
+	if err != nil {
+		return errors.Wrap(err, "prepare named")
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, map[string]interface{}{
+		"id": id,
+	}); err != nil {
+		if err == sql.ErrNoRows {
+			return category.ErrNotFound
+		}
+
 		return errors.Wrap(err, "exec context")
 	}
 

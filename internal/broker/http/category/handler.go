@@ -45,6 +45,12 @@ type Finder interface {
 type Updater interface {
 	Update(ctx context.Context, id int, f *category.Form) (*category.Category, error)
 }
+
+// Deleter abstraction for delete service.
+type Deleter interface {
+	Delete(ctx context.Context, id int) error
+}
+
 // CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
@@ -121,7 +127,7 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// UpdateHandler for find requests.
+// UpdateHandler for update requests.
 type UpdateHandler struct {
 	Updater
 }
@@ -163,5 +169,25 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	if _, err := w.Write(data); err != nil {
 		return errors.Wrap(err, "write response")
 	}
+	return nil
+}
+
+// type DeleteHandler for delete request.
+type DeleteHandler struct {
+	Deleter
+}
+
+func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+	}
+
+	if err := h.Deleter.Delete(r.Context(), id); err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "delete category")
+	}
+
 	return nil
 }
