@@ -25,7 +25,7 @@ func (r *Repository) CreateCategory(ctx context.Context, f *category.NewCategory
 
 const findCategoryQuery = `SELECT id, name, created_at, updated_at FROM categories WHERE id = $1`
 
-// Find Category finds a category by id
+// FindCategory finds a category by id.
 func (r *Repository) FindCategory(ctx context.Context, id int) (*category.Category, error) {
 	var cat category.Category
 
@@ -38,4 +38,27 @@ func (r *Repository) FindCategory(ctx context.Context, id int) (*category.Catego
 	}
 
 	return &cat, nil
+}
+
+const updateCategoryQuery = `UPDATE categories SET name=:name, updated_at=now() WHERE id=:id`
+
+// UpdateCategory updates a category by id.
+func (r *Repository) UpdateCategory(ctx context.Context, id int, cat *category.Category) error {
+	stmt, err := r.db.PrepareNamed(updateCategoryQuery)
+	if err != nil {
+		return errors.Wrap(err, "prepare named")
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, map[string]interface{}{
+		"id":   id,
+		"name": cat.Name,
+	}); err != nil {
+		if err == sql.ErrNoRows {
+			return category.ErrNotFound
+		}
+		return errors.Wrap(err, "exec context")
+	}
+
+	return nil
 }
