@@ -86,3 +86,25 @@ func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
 
 	return nil
 }
+
+const listCategoryQuery = `SELECT * FROM categories`
+
+// ListCategories shows all categories.
+func (r *Repository) ListCategories(ctx context.Context, cat *category.Categories) error {
+	rows, err := r.db.QueryxContext(ctx, listCategoryQuery)
+	if err != nil {
+		return errors.Wrap(err, "query rows")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c category.Category
+		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return errors.Wrap(err, "categories query row scan on loop")
+		}
+
+		cat.Categories = append(cat.Categories, c)
+	}
+
+	return nil
+}

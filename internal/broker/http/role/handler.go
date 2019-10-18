@@ -198,13 +198,13 @@ func (rol *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// ListHanlder for delete requests.
-type ListHanlder struct {
+// ListHanlder for list requests.
+type ListHandler struct {
 	Lister
 }
 
 // Handle implements Handler interface.
-func (rol *ListHanlder) Handle(w http.ResponseWriter, r *http.Request) error {
+func (rol *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	roles, err := rol.Lister.List(r.Context())
 	if err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "list of roles")

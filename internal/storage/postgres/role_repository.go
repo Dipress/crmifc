@@ -91,7 +91,7 @@ func (r *Repository) ListRoles(ctx context.Context, roles *role.Roles) error {
 	for rows.Next() {
 		var rl role.Role
 		if err := rows.Scan(&rl.ID, &rl.Name, &rl.CreatedAt, &rl.UpdatedAt); err != nil {
-			return errors.Wrap(err, "users query row scan on loop")
+			return errors.Wrap(err, "roles query row scan on loop")
 		}
 
 		roles.Roles = append(roles.Roles, rl)

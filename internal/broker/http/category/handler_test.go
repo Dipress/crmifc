@@ -207,3 +207,47 @@ type deleteFunc func(ctx context.Context, id int) error
 func (d deleteFunc) Delete(ctx context.Context, id int) error {
 	return d(ctx, id)
 }
+
+func TestListHandler(t *testing.T) {
+	tests := []struct {
+		name     string
+		listFunc func(ctx context.Context) (*category.Categories, error)
+		code     int
+	}{
+		{
+			name: "ok",
+			listFunc: func(ctx context.Context) (*category.Categories, error) {
+				return &category.Categories{}, nil
+			},
+			code: http.StatusOK,
+		},
+		{
+			name: "repository error",
+			listFunc: func(ctx context.Context) (*category.Categories, error) {
+				return &category.Categories{}, errors.New("mock error")
+			},
+			code: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			h := ListHandler{listFunc(tc.listFunc)}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
+
+			err := h.Handle(w, r)
+			if w.Code != tc.code {
+				t.Errorf("unexpected code: %d expected %d error: %v", w.Code, tc.code, err)
+			}
+		})
+	}
+}
+
+type listFunc func(ctx context.Context) (*category.Categories, error)
+
+func (l listFunc) List(ctx context.Context) (*category.Categories, error) {
+	return l(ctx)
+}
