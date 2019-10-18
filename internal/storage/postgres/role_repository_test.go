@@ -8,29 +8,33 @@ import (
 )
 
 func TestRoleCreate(t *testing.T) {
-	t.Parallel()
+	t.Log("with initialized repository")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
 
-	db, teardown := postgresDB(t)
-	defer teardown()
+		r := NewRepository(db)
 
-	r := NewRepository(db)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+		t.Log("\ttest:0\tshould create the role into the database")
+		{
 
-	nr := role.NewRole{
-		Name: "Admin",
-	}
+			nr := role.NewRole{
+				Name: "Admin",
+			}
 
-	var rol role.Role
-	err := r.CreateRole(ctx, &nr, &rol)
+			var rol role.Role
+			err := r.CreateRole(ctx, &nr, &rol)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	if rol.ID == 0 {
-		t.Error("expected to parse returned id")
+			if rol.ID == 0 {
+				t.Error("expected to parse returned id")
+			}
+		}
 	}
 
 }
@@ -129,7 +133,6 @@ func TestRoleDelete(t *testing.T) {
 }
 
 func TestListRoles(t *testing.T) {
-	t.Parallel()
 	t.Log("with initialized repository")
 	{
 		db, teardown := postgresDB(t)

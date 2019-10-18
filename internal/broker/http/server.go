@@ -16,6 +16,7 @@ import (
 	categoryCreate "github.com/dipress/crmifc/internal/category/create"
 	categoryDelete "github.com/dipress/crmifc/internal/category/delete"
 	categoryFind "github.com/dipress/crmifc/internal/category/find"
+	categoryList "github.com/dipress/crmifc/internal/category/list"
 	categoryUpdate "github.com/dipress/crmifc/internal/category/update"
 	authEng "github.com/dipress/crmifc/internal/kit/auth"
 	roleCreate "github.com/dipress/crmifc/internal/role/create"
@@ -56,6 +57,7 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	categoryUpdateService := categoryUpdate.NewService(repo, &validation.Category{})
 	categoryFindService := categoryFind.NewService(repo)
 	categoryDeleteService := categoryDelete.NewService(repo)
+	categoryListService := categoryList.NewService(repo)
 
 	// Auth handler.
 	authenticateHandler := user.AuthHandler{
@@ -105,7 +107,7 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 		Deleter: roleDeleteService,
 	}
 
-	roleListHandler := role.ListHanlder{
+	roleListHandler := role.ListHandler{
 		Lister: roleListService,
 	}
 
@@ -124,6 +126,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 
 	categoryDeleteHandler := category.DeleteHandler{
 		Deleter: categoryDeleteService,
+	}
+
+	categoryListHandler := category.ListHandler{
+		Lister: categoryListService,
 	}
 
 	// User routes.
@@ -184,6 +190,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	mux.HandleFunc("/categories/{id}", AuthMiddleware(category.HTTPHandler{
 		Handler: &categoryDeleteHandler,
 	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
+
+	mux.HandleFunc("/categories", AuthMiddleware(category.HTTPHandler{
+		Handler: &categoryListHandler,
+	}, authenticator).ServeHTTP).Methods(http.MethodGet)
 
 	s := http.Server{
 		Addr:         addr,

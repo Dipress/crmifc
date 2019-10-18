@@ -51,6 +51,11 @@ type Deleter interface {
 	Delete(ctx context.Context, id int) error
 }
 
+// Lister abstraction for list service.
+type Lister interface {
+	List(ctx context.Context) (*category.Categories, error)
+}
+
 // CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
@@ -177,6 +182,7 @@ type DeleteHandler struct {
 	Deleter
 }
 
+// Handle implements Handler interface.
 func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 
@@ -187,6 +193,30 @@ func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	if err := h.Deleter.Delete(r.Context(), id); err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "delete category")
+	}
+
+	return nil
+}
+
+// ListHanlder for list requests.
+type ListHandler struct {
+	Lister
+}
+
+// Handle implements Handler interface.
+func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	categories, err := h.Lister.List(r.Context())
+	if err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "list of roles")
+	}
+
+	data, err := categories.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(err, "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(err, "write response")
 	}
 
 	return nil

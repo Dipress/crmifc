@@ -233,7 +233,7 @@ func TestListHandler(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := ListHanlder{listFunc(tc.listFunc)}
+			h := ListHandler{listFunc(tc.listFunc)}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
 

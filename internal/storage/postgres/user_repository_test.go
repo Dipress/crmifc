@@ -11,8 +11,6 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	t.Parallel()
-
 	t.Log("with initialize repository")
 	{
 		db, teardown := postgresDB(t)
@@ -219,7 +217,6 @@ func TestUniqueEmail(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	t.Parallel()
 	t.Log("with initialized repository")
 	{
 		db, teardown := postgresDB(t)
@@ -274,14 +271,13 @@ func TestListUsers(t *testing.T) {
 			}
 
 			if len(users.Users) != 2 {
-				t.Error("expected to slice of two posts")
+				t.Error("expected to slice of two users")
 			}
 		}
 	}
 }
 
 func TestFindUserByEmail(t *testing.T) {
-	t.Parallel()
 	t.Log("with initialized repository")
 	{
 		db, teardown := postgresDB(t)
