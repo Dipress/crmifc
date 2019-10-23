@@ -4,8 +4,8 @@
 // migrations/1565894792_users.up.sql
 // migrations/1569158364_roles.down.sql
 // migrations/1569158364_roles.up.sql
-// migrations/1570866542_pages.down.sql
-// migrations/1570866542_pages.up.sql
+// migrations/1570866542_articles.down.sql
+// migrations/1570866542_articles.up.sql
 // migrations/1571140600_categories.down.sql
 // migrations/1571140600_categories.up.sql
 // DO NOT EDIT!
@@ -155,42 +155,42 @@ func _1569158364_rolesUpSql() (*asset, error) {
 	return a, nil
 }
 
-var __1570866542_pagesDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x28\x48\x4c\x4f\x2d\xb6\xe6\x02\x04\x00\x00\xff\xff\x5d\xb2\x15\x0c\x1c\x00\x00\x00")
+var __1570866542_articlesDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x48\x2c\x2a\xc9\x4c\xce\x49\x2d\xb6\xe6\x02\x04\x00\x00\xff\xff\xc8\xa2\xce\x28\x1f\x00\x00\x00")
 
-func _1570866542_pagesDownSqlBytes() ([]byte, error) {
+func _1570866542_articlesDownSqlBytes() ([]byte, error) {
 	return bindataRead(
-		__1570866542_pagesDownSql,
-		"1570866542_pages.down.sql",
+		__1570866542_articlesDownSql,
+		"1570866542_articles.down.sql",
 	)
 }
 
-func _1570866542_pagesDownSql() (*asset, error) {
-	bytes, err := _1570866542_pagesDownSqlBytes()
+func _1570866542_articlesDownSql() (*asset, error) {
+	bytes, err := _1570866542_articlesDownSqlBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "1570866542_pages.down.sql", size: 28, mode: os.FileMode(420), modTime: time.Unix(1571144203, 0)}
+	info := bindataFileInfo{name: "1570866542_articles.down.sql", size: 31, mode: os.FileMode(420), modTime: time.Unix(1571404816, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
-var __1570866542_pagesUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x9c\xce\x41\x4b\xc3\x40\x10\x05\xe0\xf3\xcc\xaf\x98\x63\x5b\x0a\x05\xa1\x27\x4f\x63\x9c\xe2\xe2\x26\x96\xc9\x44\xda\x53\x58\xbb\x4b\x59\xb0\x34\x24\xeb\xa1\xff\x5e\xf4\x50\xcc\xd5\xf3\x7b\xdf\xe3\x55\x2a\x6c\x42\xc6\x4f\x5e\xc8\xed\xa8\x79\x33\x92\x83\x6b\xad\xa5\x21\x9c\xd3\x44\x0b\x84\x1c\xa1\x15\x75\xec\x69\xaf\xae\x66\x3d\xd2\xab\x1c\xd7\x08\x5f\x53\x1a\xfb\x1c\xc1\x35\xf6\xeb\x9a\xce\xfb\x35\x42\xc9\xe5\x33\xc1\x3b\x6b\xf5\xc2\x4a\x8b\x87\xed\x76\xf9\x37\xfe\xb8\xc6\x1b\x98\x1c\x66\xe6\x14\x4a\x3a\x5f\xc7\x5b\x9f\x23\xcd\xe7\x10\x36\x2b\x2a\xf9\x92\xa6\x12\x2e\x03\xad\x36\x08\xa7\x31\x85\x92\x62\x1f\x0a\x98\xab\xa5\x35\xae\xf7\x77\x41\xcf\xb2\xe3\xce\x1b\x55\x9d\xaa\x34\xd6\xdf\x2b\x3f\x8f\x87\xf8\x1f\x89\xcb\x47\xc4\xef\x00\x00\x00\xff\xff\xc2\x7c\xd4\xb5\x2a\x01\x00\x00")
+var __1570866542_articlesUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x9c\xce\x41\x4b\xc3\x40\x10\x05\xe0\xf3\xec\xaf\x98\x63\x5b\x0a\x05\xa1\x27\x4f\x63\x9c\xe2\xe2\x26\x96\xc9\x44\xda\x53\x58\xb3\x8b\x2c\xb4\xb4\x24\xe3\xa1\xff\x5e\xf4\x50\xcc\xd5\xf3\x7b\xdf\xe3\x55\xc2\xa4\x8c\x4a\x4f\x81\xd1\xef\xb0\x79\x53\xe4\x83\x6f\xb5\xc5\x38\x5a\x19\x4e\x79\xc2\x85\x83\x92\xa0\x65\xf1\x14\x70\x2f\xbe\x26\x39\xe2\x2b\x1f\xd7\x0e\xbe\xa6\x3c\xf6\x25\x81\x6f\xf4\x97\x36\x5d\x08\x6b\x07\x56\xec\x94\xe1\x9d\xa4\x7a\x21\xc1\xc5\xc3\x76\xbb\xfc\x1b\x7f\x5c\xd2\x0d\x94\x0f\x33\x33\x44\xcb\x9f\x97\xf1\xd6\x97\x84\xf3\x39\x07\x9b\x15\x5a\x39\xe7\xc9\xe2\xf9\x8a\xab\x8d\x83\x61\xcc\xd1\x72\xea\xa3\x81\xfa\x9a\x5b\xa5\x7a\x7f\x17\xf8\xcc\x3b\xea\x82\x62\xd5\x89\x70\xa3\xfd\xbd\xf2\xf3\xf8\x9a\xfe\x23\xdd\xf2\xd1\xb9\xef\x00\x00\x00\xff\xff\x9f\x48\x4d\x56\x2d\x01\x00\x00")
 
-func _1570866542_pagesUpSqlBytes() ([]byte, error) {
+func _1570866542_articlesUpSqlBytes() ([]byte, error) {
 	return bindataRead(
-		__1570866542_pagesUpSql,
-		"1570866542_pages.up.sql",
+		__1570866542_articlesUpSql,
+		"1570866542_articles.up.sql",
 	)
 }
 
-func _1570866542_pagesUpSql() (*asset, error) {
-	bytes, err := _1570866542_pagesUpSqlBytes()
+func _1570866542_articlesUpSql() (*asset, error) {
+	bytes, err := _1570866542_articlesUpSqlBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "1570866542_pages.up.sql", size: 298, mode: os.FileMode(420), modTime: time.Unix(1571144203, 0)}
+	info := bindataFileInfo{name: "1570866542_articles.up.sql", size: 301, mode: os.FileMode(420), modTime: time.Unix(1571404800, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -230,7 +230,7 @@ func _1571140600_categoriesUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "1571140600_categories.up.sql", size: 236, mode: os.FileMode(420), modTime: time.Unix(1571163793, 0)}
+	info := bindataFileInfo{name: "1571140600_categories.up.sql", size: 236, mode: os.FileMode(420), modTime: time.Unix(1571221426, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -291,8 +291,8 @@ var _bindata = map[string]func() (*asset, error){
 	"1565894792_users.up.sql": _1565894792_usersUpSql,
 	"1569158364_roles.down.sql": _1569158364_rolesDownSql,
 	"1569158364_roles.up.sql": _1569158364_rolesUpSql,
-	"1570866542_pages.down.sql": _1570866542_pagesDownSql,
-	"1570866542_pages.up.sql": _1570866542_pagesUpSql,
+	"1570866542_articles.down.sql": _1570866542_articlesDownSql,
+	"1570866542_articles.up.sql": _1570866542_articlesUpSql,
 	"1571140600_categories.down.sql": _1571140600_categoriesDownSql,
 	"1571140600_categories.up.sql": _1571140600_categoriesUpSql,
 }
@@ -341,8 +341,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"1565894792_users.up.sql": &bintree{_1565894792_usersUpSql, map[string]*bintree{}},
 	"1569158364_roles.down.sql": &bintree{_1569158364_rolesDownSql, map[string]*bintree{}},
 	"1569158364_roles.up.sql": &bintree{_1569158364_rolesUpSql, map[string]*bintree{}},
-	"1570866542_pages.down.sql": &bintree{_1570866542_pagesDownSql, map[string]*bintree{}},
-	"1570866542_pages.up.sql": &bintree{_1570866542_pagesUpSql, map[string]*bintree{}},
+	"1570866542_articles.down.sql": &bintree{_1570866542_articlesDownSql, map[string]*bintree{}},
+	"1570866542_articles.up.sql": &bintree{_1570866542_articlesUpSql, map[string]*bintree{}},
 	"1571140600_categories.down.sql": &bintree{_1571140600_categoriesDownSql, map[string]*bintree{}},
 	"1571140600_categories.up.sql": &bintree{_1571140600_categoriesUpSql, map[string]*bintree{}},
 }}
