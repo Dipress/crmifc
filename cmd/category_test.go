@@ -13,6 +13,7 @@ import (
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/kit/auth"
 	"github.com/dipress/crmifc/internal/storage/postgres"
+	"github.com/dipress/crmifc/internal/user"
 )
 
 func TestCategoryCreate(t *testing.T) {
@@ -24,7 +25,21 @@ func TestCategoryCreate(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+		repo := postgres.NewRepository(db)
+
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress",
+			Email:        "dipress@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
+
+		var u user.User
+		if err := repo.CreateUser(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
 
 		token, err := authenticator.GenerateToken(ctx, claims)
 		if err != nil {

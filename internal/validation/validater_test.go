@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/user"
@@ -245,5 +246,84 @@ func TestCategoryValidate(t *testing.T) {
 			}
 		})
 
+	}
+}
+
+func TestArticleValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		form    article.Form
+		wantErr bool
+		expect  Errors
+	}{
+		{
+			name: "ok",
+			form: article.Form{
+				CategoryID: 1,
+				Title:      "my title",
+				Body:       "my body",
+			},
+		},
+		{
+			name: "blank categoryID",
+			form: article.Form{
+				Title: "my title",
+				Body:  "my body",
+			},
+			wantErr: true,
+			expect: Errors{
+				"category_id": "cannot be blank",
+			},
+		},
+		{
+			name: "blank title",
+			form: article.Form{
+				CategoryID: 1,
+				Body:       "my body",
+			},
+			wantErr: true,
+			expect: Errors{
+				"title": "cannot be blank",
+			},
+		},
+		{
+			name: "blank body",
+			form: article.Form{
+				CategoryID: 1,
+				Title:      "my title",
+			},
+			wantErr: true,
+			expect: Errors{
+				"body": "cannot be blank",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			var a Article
+			err := a.Validate(ctx, &tc.form)
+			if tc.wantErr {
+				got, ok := err.(Errors)
+				if !ok {
+					t.Errorf("unknown error: %v", err)
+					return
+				}
+
+				if !reflect.DeepEqual(tc.expect, got) {
+					t.Errorf("expected: %+#v got: %+#v", tc.expect, got)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
 	}
 }
