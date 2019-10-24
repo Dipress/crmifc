@@ -80,3 +80,25 @@ func (r *Repository) UpdateArticle(ctx context.Context, id int, a *article.Artic
 	}
 	return nil
 }
+
+const deleteArticleQuery = `DELETE FROM articles WHERE id=:id`
+
+// DeleteArticle deletes article by id.
+func (r *Repository) DeleteArticle(ctx context.Context, id int) error {
+	stmt, err := r.db.PrepareNamed(deleteArticleQuery)
+	if err != nil {
+		return errors.Wrap(err, "prepare named")
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, map[string]interface{}{
+		"id": id,
+	}); err != nil {
+		if err == sql.ErrNoRows {
+			return article.ErrNotFound
+		}
+		return errors.Wrap(err, "exec context")
+	}
+
+	return nil
+}

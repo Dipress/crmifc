@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	articleCreate "github.com/dipress/crmifc/internal/article/create"
+	articleDelete "github.com/dipress/crmifc/internal/article/delete"
 	articleFind "github.com/dipress/crmifc/internal/article/find"
 	articleUpdate "github.com/dipress/crmifc/internal/article/update"
 	"github.com/dipress/crmifc/internal/auth"
@@ -66,6 +67,7 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	articleCreateService := articleCreate.NewService(repo, &validation.Article{})
 	articleFindService := articleFind.NewService(repo)
 	articleUpdateService := articleUpdate.NewService(repo, &validation.Article{})
+	articleDeleteService := articleDelete.NewService(repo)
 
 	// Auth handler.
 	authenticateHandler := user.AuthHandler{
@@ -153,6 +155,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 		Updater: articleUpdateService,
 	}
 
+	articleDeleteHandler := article.DeleteHandler{
+		Deleter: articleDeleteService,
+	}
+
 	// User routes.
 	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
 		Handler: &userCreateHandler,
@@ -228,6 +234,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
 		Handler: &articleUpdateHandler,
 	}, authenticator).ServeHTTP).Methods(http.MethodPut)
+
+	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
+		Handler: &articleDeleteHandler,
+	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
 
 	s := http.Server{
 		Addr:         addr,

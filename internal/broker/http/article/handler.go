@@ -47,6 +47,11 @@ type Updater interface {
 	Update(ctx context.Context, id int, f *article.Form) (*article.Article, error)
 }
 
+// Deleter abstraction for delete service.
+type Deleter interface {
+	Delete(ctx context.Context, id int) error
+}
+
 // CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
@@ -72,7 +77,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "create role")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "create article")
 		}
 	}
 
@@ -108,7 +113,7 @@ func (f FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		case article.ErrNotFound:
 			return errors.Wrap(response.NotFoundResponse(w), "find")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "find")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "find article")
 		}
 	}
 
@@ -153,7 +158,7 @@ func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "registrate")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "update article")
 		}
 	}
 
@@ -164,6 +169,27 @@ func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	if _, err := w.Write(data); err != nil {
 		return errors.Wrap(err, "write response")
+	}
+
+	return nil
+}
+
+// DeleteHandler for article update requests.
+type DeleteHandler struct {
+	Deleter
+}
+
+// Handle implements Handler interface.
+func (h DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+	}
+
+	if err := h.Deleter.Delete(r.Context(), id); err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "delete article")
 	}
 
 	return nil

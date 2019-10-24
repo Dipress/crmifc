@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Service(t *testing.T) {
+func Test_Service_Create(t *testing.T) {
 	tests := []struct {
 		name           string
 		repositoryFunc func(mock *MockRepository)

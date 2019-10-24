@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Service(t *testing.T) {
+func Test_Service_Update(t *testing.T) {
 	tests := []struct {
 		name           string
 		validaterFunc  func(mock *MockValidater)

@@ -161,3 +161,48 @@ type updateFunc func(ctx context.Context, id int, f *article.Form) (*article.Art
 func (u updateFunc) Update(ctx context.Context, id int, f *article.Form) (*article.Article, error) {
 	return u(ctx, id, f)
 }
+
+func TestDeleteHandler(t *testing.T) {
+	tests := []struct {
+		name       string
+		deleteFunc func(ctx context.Context, id int) error
+		code       int
+	}{
+		{
+			name: "ok",
+			deleteFunc: func(ctx context.Context, id int) error {
+				return nil
+			},
+			code: http.StatusOK,
+		},
+		{
+			name: "repository error",
+			deleteFunc: func(ctx context.Context, id int) error {
+				return errors.New("mock error")
+			},
+			code: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			h := DeleteHandler{deleteFunc(tc.deleteFunc)}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodDelete, "http://example.com", strings.NewReader("{}"))
+			r = mux.SetURLVars(r, map[string]string{"id": "1"})
+
+			err := h.Handle(w, r)
+			if w.Code != tc.code {
+				t.Errorf("unexpected code: %d expected %d error: %v", w.Code, tc.code, err)
+			}
+		})
+	}
+}
+
+type deleteFunc func(ctx context.Context, id int) error
+
+func (d deleteFunc) Delete(ctx context.Context, id int) error {
+	return d(ctx, id)
+}
