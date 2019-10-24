@@ -173,6 +173,7 @@ func (h FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	if _, err := w.Write(data); err != nil {
 		return errors.Wrap(err, "write response")
 	}
+	
 	return nil
 }
 

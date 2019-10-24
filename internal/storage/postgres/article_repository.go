@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/pkg/errors"
@@ -28,4 +29,29 @@ func (r *Repository) CreateArticle(ctx context.Context, f *article.NewArticle, a
 	}
 
 	return nil
+}
+
+const findArticleQuery = `SELECT id, user_id, category_id, title, body, created_at, updated_at FROM articles WHERE id = $1`
+
+// FindArticle finds a article by id.
+func (r *Repository) FindArticle(ctx context.Context, id int) (*article.Article, error) {
+	var a article.Article
+	if err := r.db.QueryRowContext(ctx, findArticleQuery, id).
+		Scan(
+			&a.ID,
+			&a.UserID,
+			&a.CategoryID,
+			&a.Title,
+			&a.Body,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+		); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, article.ErrNotFound
+		}
+
+		return nil, errors.Wrap(err, "query row scan")
+	}
+
+	return &a, nil
 }
