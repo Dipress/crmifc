@@ -11,6 +11,7 @@ import (
 
 	articleCreate "github.com/dipress/crmifc/internal/article/create"
 	articleFind "github.com/dipress/crmifc/internal/article/find"
+	articleUpdate "github.com/dipress/crmifc/internal/article/update"
 	"github.com/dipress/crmifc/internal/auth"
 	"github.com/dipress/crmifc/internal/broker/http/article"
 	"github.com/dipress/crmifc/internal/broker/http/category"
@@ -64,6 +65,7 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 
 	articleCreateService := articleCreate.NewService(repo, &validation.Article{})
 	articleFindService := articleFind.NewService(repo)
+	articleUpdateService := articleUpdate.NewService(repo, &validation.Article{})
 
 	// Auth handler.
 	authenticateHandler := user.AuthHandler{
@@ -147,6 +149,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 		Finder: articleFindService,
 	}
 
+	articleUpdateHandler := article.UpdateHandler{
+		Updater: articleUpdateService,
+	}
+
 	// User routes.
 	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
 		Handler: &userCreateHandler,
@@ -218,6 +224,10 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
 		Handler: &articleFindHandler,
 	}, authenticator).ServeHTTP).Methods(http.MethodGet)
+
+	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
+		Handler: &articleUpdateHandler,
+	}, authenticator).ServeHTTP).Methods(http.MethodPut)
 
 	s := http.Server{
 		Addr:         addr,

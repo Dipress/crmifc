@@ -42,6 +42,11 @@ type Finder interface {
 	Find(ctx context.Context, id int) (*article.Article, error)
 }
 
+// Updater abstraction for update service.
+type Updater interface {
+	Update(ctx context.Context, id int, f *article.Form) (*article.Article, error)
+}
+
 // CreateHandler for create requests.
 type CreateHandler struct {
 	Creater
@@ -83,7 +88,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// FindHandler for  user create requests.
+// FindHandler for article create requests.
 type FindHandler struct {
 	Finder
 }
@@ -108,6 +113,51 @@ func (f FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	data, err := a.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(err, "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(err, "write response")
+	}
+
+	return nil
+}
+
+// UpdateHandler for article update requests.
+type UpdateHandler struct {
+	Updater
+}
+
+// Handle implements Handler interface.
+func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+	}
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return errors.Wrap(response.BadRequestResponse(w), "read body")
+	}
+
+	var f article.Form
+	if err := f.UnmarshalJSON(data); err != nil {
+		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
+	}
+
+	art, err := h.Updater.Update(r.Context(), id, &f)
+	if err != nil {
+		switch v := errors.Cause(err).(type) {
+		case validation.Errors:
+			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
+		default:
+			return errors.Wrap(response.InternalServerErrorResponse(w), "registrate")
+		}
+	}
+
+	data, err = art.MarshalJSON()
 	if err != nil {
 		return errors.Wrap(err, "marshal json")
 	}
