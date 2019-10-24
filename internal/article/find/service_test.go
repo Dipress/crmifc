@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFindArticle(t *testing.T) {
+func Test_Service_Find(t *testing.T) {
 	tests := []struct {
 		name           string
 		repositoryFunc func(ctx context.Context, id int) (*article.Article, error)

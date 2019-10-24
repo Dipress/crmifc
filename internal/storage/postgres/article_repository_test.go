@@ -112,3 +112,37 @@ func TestUpdateArticle(t *testing.T) {
 		}
 	}
 }
+
+func TestArticleDelete(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		r := NewRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		na := article.NewArticle{
+			UserID:     5,
+			CategoryID: 32,
+			Title:      "my new title",
+			Body:       "my new body",
+		}
+
+		var art article.Article
+		err := r.CreateArticle(ctx, &na, &art)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		t.Log("\ttest:0\tshould delete the article into the database")
+		{
+			err := r.DeleteArticle(ctx, art.ID)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		}
+	}
+}
