@@ -55,3 +55,28 @@ func (r *Repository) FindArticle(ctx context.Context, id int) (*article.Article,
 
 	return &a, nil
 }
+
+const updateArticleQuery = `UPDATE articles SET user_id=:user_id, category_id=:category_id, title=:title, body=:body, updated_at=now() WHERE id=:id`
+
+// UpdateArticle updates article by id.
+func (r *Repository) UpdateArticle(ctx context.Context, id int, a *article.Article) error {
+	stmt, err := r.db.PrepareNamed(updateArticleQuery)
+	if err != nil {
+		return errors.Wrap(err, "prepare named")
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, map[string]interface{}{
+		"id":          id,
+		"user_id":     a.UserID,
+		"category_id": a.CategoryID,
+		"title":       a.Title,
+		"body":        a.Body,
+	}); err != nil {
+		if err == sql.ErrNoRows {
+			return article.ErrNotFound
+		}
+		return errors.Wrap(err, "exec context")
+	}
+	return nil
+}

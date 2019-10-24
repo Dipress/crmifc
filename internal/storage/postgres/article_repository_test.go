@@ -39,7 +39,6 @@ func TestCreateArticle(t *testing.T) {
 
 		}
 	}
-
 }
 
 func TestFindArticle(t *testing.T) {
@@ -69,6 +68,44 @@ func TestFindArticle(t *testing.T) {
 		t.Log("\ttest:0\tshould find the article into the database")
 		{
 			_, err := r.FindArticle(ctx, art.ID)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		}
+	}
+}
+
+func TestUpdateArticle(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		r := NewRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		na := article.NewArticle{
+			UserID:     2,
+			CategoryID: 12,
+			Title:      "my new title",
+			Body:       "my new body",
+		}
+
+		var art article.Article
+		err := r.CreateArticle(ctx, &na, &art)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		t.Log("\ttest:0\tshould update the article into the database")
+		{
+			art.Title = "my update title"
+			art.Body = "my update body"
+			art.CategoryID = 13
+
+			err := r.UpdateArticle(ctx, 1, &art)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
