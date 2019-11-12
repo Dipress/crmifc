@@ -5,13 +5,28 @@ import (
 	"database/sql"
 
 	"github.com/dipress/crmifc/internal/role"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
 
+// RoleRepository holds CRUD actions.
+type RoleRepository struct {
+	db *sqlx.DB
+}
+
+//NewRoleRepository factory prepares the repository to work.
+func NewRoleRepository(db *sql.DB) *RoleRepository {
+	r := RoleRepository{
+		db: sqlx.NewDb(db, driverName),
+	}
+
+	return &r
+}
+
 const createRoleQuery = `INSERT INTO roles (name) VALUES ($1) RETURNING id, name, created_at, updated_at`
 
-// CreateRole insert a new role into the database.
-func (r *Repository) CreateRole(ctx context.Context, f *role.NewRole, rol *role.Role) error {
+// Create insert a new role into the database.
+func (r *RoleRepository) Create(ctx context.Context, f *role.NewRole, rol *role.Role) error {
 	if err := r.db.QueryRowContext(ctx, createRoleQuery, f.Name).
 		Scan(&rol.ID, &rol.Name, &rol.CreatedAt, &rol.UpdatedAt); err != nil {
 		return errors.Wrap(err, "query context scan")
@@ -22,7 +37,7 @@ func (r *Repository) CreateRole(ctx context.Context, f *role.NewRole, rol *role.
 const findRoleQuery = `SELECT id, name, created_at, updated_at FROM roles where id = $1`
 
 // FindRole finds a role by id.
-func (r *Repository) FindRole(ctx context.Context, id int) (*role.Role, error) {
+func (r *RoleRepository) Find(ctx context.Context, id int) (*role.Role, error) {
 	var rol role.Role
 	if err := r.db.QueryRowContext(ctx, findRoleQuery, id).
 		Scan(&rol.ID, &rol.Name, &rol.CreatedAt, &rol.UpdatedAt); err != nil {
@@ -37,7 +52,7 @@ func (r *Repository) FindRole(ctx context.Context, id int) (*role.Role, error) {
 const updateRoleQuery = `UPDATE roles SET name=:name, updated_at=now() WHERE id=:id`
 
 // UpdateRole updates role by id.
-func (r *Repository) UpdateRole(ctx context.Context, id int, rl *role.Role) error {
+func (r *RoleRepository) Update(ctx context.Context, id int, rl *role.Role) error {
 
 	stmt, err := r.db.PrepareNamed(updateRoleQuery)
 	if err != nil {
@@ -59,8 +74,8 @@ func (r *Repository) UpdateRole(ctx context.Context, id int, rl *role.Role) erro
 
 const deleteRoleQuery = `DELETE FROM roles WHERE id=:id`
 
-// DeleteRole deletes role by id.
-func (r *Repository) DeleteRole(ctx context.Context, id int) error {
+// Delete deletes role by id.
+func (r *RoleRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteRoleQuery)
 	if err != nil {
 		return errors.Wrap(err, "prepare named")
@@ -80,8 +95,8 @@ func (r *Repository) DeleteRole(ctx context.Context, id int) error {
 
 const listRoleQuery = `SELECT * FROM roles`
 
-// ListRoles shows all roles.
-func (r *Repository) ListRoles(ctx context.Context, roles *role.Roles) error {
+// List shows all roles.
+func (r *RoleRepository) List(ctx context.Context, roles *role.Roles) error {
 	rows, err := r.db.QueryxContext(ctx, listRoleQuery)
 	if err != nil {
 		return errors.Wrap(err, "query rows")

@@ -22,7 +22,7 @@ func TestSignIn(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		repo := postgres.NewRepository(db)
+		repo := postgres.NewUserRepository(db)
 
 		nu := user.NewUser{
 			Username:     "username6",
@@ -31,7 +31,7 @@ func TestSignIn(t *testing.T) {
 		}
 
 		var u user.User
-		if err := repo.CreateUser(ctx, &nu, &u); err != nil {
+		if err := repo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -40,7 +40,9 @@ func TestSignIn(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		s := setupServer(lis.Addr().String(), db, authenticator)
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

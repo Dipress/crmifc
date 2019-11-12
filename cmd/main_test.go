@@ -15,8 +15,11 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dipress/crmifc/internal/kit/auth"
 	"github.com/dipress/crmifc/internal/kit/docker"
+	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/storage/postgres/schema"
 	"github.com/ory/dockertest"
+
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -55,25 +58,6 @@ func TestMain(m *testing.M) {
 			pgDocker.Resource.GetPort("5432/tcp")),
 	)
 
-	// Authentication setup
-	keyContents, err := ioutil.ReadFile("../internal/kit/keys/jwtRS256.key")
-	if err != nil {
-		log.Fatalf("reading auth private key: %v", err)
-	}
-
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(keyContents)
-	if err != nil {
-		log.Fatalf("parsing auth private key: %v", err)
-	}
-
-	publicKeyLookup := auth.NewSingleKeyFunc("12345", key.Public().(*rsa.PublicKey))
-	ac, err := auth.NewAuthenticator(key, "12345", alg, publicKeyLookup)
-	if err != nil {
-		log.Fatalf("constructing authenticator: %v", err)
-	}
-
-	authenticator = ac
-
 	code := m.Run()
 
 	db.Close()
@@ -93,4 +77,26 @@ func postgresDB(t *testing.T) (db *sql.DB, teardown func() error) {
 	}
 
 	return db, db.Close
+}
+
+func authenticatorSetup(db *sql.DB) *auth.Authenticator {
+	keyContents, err := ioutil.ReadFile("../internal/kit/keys/jwtRS256.key")
+	if err != nil {
+		log.Fatalf("reading auth private key: %v", err)
+	}
+
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(keyContents)
+	if err != nil {
+		log.Fatalf("parsing auth private key: %v", err)
+	}
+
+	publicKeyLookup := auth.NewSingleKeyFunc("12345", key.Public().(*rsa.PublicKey))
+
+	userRepo := postgres.NewUserRepository(db)
+	ac, err := auth.NewAuthenticator(key, "12345", alg, publicKeyLookup, userRepo)
+	if err != nil {
+		log.Fatalf("constructing authenticator: %v", err)
+	}
+
+	return ac
 }

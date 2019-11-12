@@ -13,7 +13,7 @@ func TestRoleCreate(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -26,7 +26,7 @@ func TestRoleCreate(t *testing.T) {
 			}
 
 			var rol role.Role
-			err := r.CreateRole(ctx, &nr, &rol)
+			err := r.Create(ctx, &nr, &rol)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -45,7 +45,7 @@ func TestRoleFind(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -55,14 +55,14 @@ func TestRoleFind(t *testing.T) {
 		}
 
 		var rol role.Role
-		err := r.CreateRole(ctx, &nr, &rol)
+		err := r.Create(ctx, &nr, &rol)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould find the role into the database")
 		{
-			_, err := r.FindRole(ctx, rol.ID)
+			_, err := r.Find(ctx, rol.ID)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -76,7 +76,7 @@ func TestRoleUpdate(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -86,7 +86,7 @@ func TestRoleUpdate(t *testing.T) {
 		}
 
 		var rol role.Role
-		err := r.CreateRole(ctx, &nr, &rol)
+		err := r.Create(ctx, &nr, &rol)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -94,7 +94,7 @@ func TestRoleUpdate(t *testing.T) {
 		t.Log("\ttest:0\tshould update the role into the database")
 		{
 			rol.Name = "Member"
-			err := r.UpdateRole(ctx, 1, &rol)
+			err := r.Update(ctx, 1, &rol)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -108,7 +108,7 @@ func TestRoleDelete(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -118,13 +118,13 @@ func TestRoleDelete(t *testing.T) {
 		}
 
 		var rol role.Role
-		err := r.CreateRole(ctx, &nr, &rol)
+		err := r.Create(ctx, &nr, &rol)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 		t.Log("\ttest:0\tshould delete the role into the database")
 		{
-			err := r.DeleteRole(ctx, 1)
+			err := r.Delete(ctx, 1)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -138,7 +138,7 @@ func TestListRoles(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -152,13 +152,13 @@ func TestListRoles(t *testing.T) {
 		}
 
 		var rol1 role.Role
-		err := r.CreateRole(ctx, &nr1, &rol1)
+		err := r.Create(ctx, &nr1, &rol1)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		var rol2 role.Role
-		err = r.CreateRole(ctx, &nr2, &rol2)
+		err = r.Create(ctx, &nr2, &rol2)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -166,7 +166,7 @@ func TestListRoles(t *testing.T) {
 		t.Log("\ttest:0\tshould show list of roles")
 		{
 			var roles role.Roles
-			err := r.ListRoles(ctx, &roles)
+			err := r.List(ctx, &roles)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

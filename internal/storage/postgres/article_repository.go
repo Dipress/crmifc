@@ -5,16 +5,31 @@ import (
 	"database/sql"
 
 	"github.com/dipress/crmifc/internal/article"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
 
+// ArticleRepository holds CRUD actions for article.
+type ArticleRepository struct {
+	db *sqlx.DB
+}
+
+//NewArticleRepository factory prepares the repository to work.
+func NewArticleRepository(db *sql.DB) *ArticleRepository {
+	r := ArticleRepository{
+		db: sqlx.NewDb(db, driverName),
+	}
+
+	return &r
+}
+
 const createArticleQuery = `INSERT INTO 
-	articles (user_id, category_id,  title, body) 
+	articles (user_id, category_id, title, body) 
 	VALUES ($1, $2, $3, $4)
 	RETURNING id, user_id, category_id, title, body, created_at, updated_at`
 
-// CreateArticle inserts a new category into the database.
-func (r *Repository) CreateArticle(ctx context.Context, f *article.NewArticle, art *article.Article) error {
+// Create inserts a new category into the database.
+func (r *ArticleRepository) Create(ctx context.Context, f *article.NewArticle, art *article.Article) error {
 	if err := r.db.QueryRowContext(ctx, createArticleQuery, f.UserID, f.CategoryID, f.Title, f.Body).
 		Scan(
 			&art.ID,
@@ -33,8 +48,8 @@ func (r *Repository) CreateArticle(ctx context.Context, f *article.NewArticle, a
 
 const findArticleQuery = `SELECT id, user_id, category_id, title, body, created_at, updated_at FROM articles WHERE id = $1`
 
-// FindArticle finds a article by id.
-func (r *Repository) FindArticle(ctx context.Context, id int) (*article.Article, error) {
+// Find finds a article by id.
+func (r *ArticleRepository) Find(ctx context.Context, id int) (*article.Article, error) {
 	var a article.Article
 	if err := r.db.QueryRowContext(ctx, findArticleQuery, id).
 		Scan(
@@ -58,8 +73,8 @@ func (r *Repository) FindArticle(ctx context.Context, id int) (*article.Article,
 
 const updateArticleQuery = `UPDATE articles SET user_id=:user_id, category_id=:category_id, title=:title, body=:body, updated_at=now() WHERE id=:id`
 
-// UpdateArticle updates article by id.
-func (r *Repository) UpdateArticle(ctx context.Context, id int, a *article.Article) error {
+// Update updates article by id.
+func (r *ArticleRepository) Update(ctx context.Context, id int, a *article.Article) error {
 	stmt, err := r.db.PrepareNamed(updateArticleQuery)
 	if err != nil {
 		return errors.Wrap(err, "prepare named")
@@ -83,8 +98,8 @@ func (r *Repository) UpdateArticle(ctx context.Context, id int, a *article.Artic
 
 const deleteArticleQuery = `DELETE FROM articles WHERE id=:id`
 
-// DeleteArticle deletes article by id.
-func (r *Repository) DeleteArticle(ctx context.Context, id int) error {
+// Delete deletes article by id.
+func (r *ArticleRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteArticleQuery)
 	if err != nil {
 		return errors.Wrap(err, "prepare named")

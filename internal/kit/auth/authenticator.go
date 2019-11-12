@@ -7,6 +7,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dipress/crmifc/internal/user"
 	"github.com/pkg/errors"
 )
 
@@ -17,15 +18,16 @@ var (
 // Claims represents the authorization claims transmitted via a JWT.
 type Claims struct {
 	jwt.StandardClaims
+	User user.User
 }
 
 // NewClaims constructs a Claims value for the identified user. The Claims
 // expire within a specified duration of the provided time. Additional fields
 // of the Claims can be set after calling NewClaims is desired.
-func NewClaims(subject string, now time.Time, expires time.Duration) Claims {
+func NewClaims(email string, now time.Time, expires time.Duration) Claims {
 	c := Claims{
 		StandardClaims: jwt.StandardClaims{
-			Subject:   subject,
+			Subject:   email,
 			IssuedAt:  now.Unix(),
 			ExpiresAt: now.Add(expires).Unix(),
 		},
@@ -65,6 +67,11 @@ func NewSingleKeyFunc(id string, key *rsa.PublicKey) KeyFunc {
 	}
 }
 
+// Repository holds find user by email action.
+type Repository interface {
+	FindByEmail(ctx context.Context, email string) (*user.User, error)
+}
+
 // Authenticator is used to authenticate clients. It can generate a token for a
 // set of user claims and recreate the claims by parsing the token.
 type Authenticator struct {
@@ -73,6 +80,7 @@ type Authenticator struct {
 	algorithm  string
 	kf         KeyFunc
 	parser     *jwt.Parser
+	Repository
 }
 
 // NewAuthenticator creates an *Authenticator for use. It will error if:
@@ -80,7 +88,7 @@ type Authenticator struct {
 // - The public key func is nil.
 // - The key ID is blank.
 // - The specified algorithm is unsupported.
-func NewAuthenticator(key *rsa.PrivateKey, keyID, algorithm string, publicKeyFunc KeyFunc) (*Authenticator, error) {
+func NewAuthenticator(key *rsa.PrivateKey, keyID, algorithm string, publicKeyFunc KeyFunc, r Repository) (*Authenticator, error) {
 	if key == nil {
 		return nil, errors.New("private key cannot be nil")
 	}
@@ -107,6 +115,7 @@ func NewAuthenticator(key *rsa.PrivateKey, keyID, algorithm string, publicKeyFun
 		algorithm:  algorithm,
 		kf:         publicKeyFunc,
 		parser:     &parser,
+		Repository: r,
 	}
 
 	return &a, nil
@@ -148,7 +157,7 @@ func (a *Authenticator) ParseClaims(ctx context.Context, tknStr string) (Claims,
 	}
 
 	var claims Claims
-	tkn, err := a.parser.ParseWithClaims(tknStr, &claims, f)
+	tkn, err := a.parser.ParseWithClaims(tknStr, &claims.StandardClaims, f)
 	if err != nil {
 		return Claims{}, errors.Wrap(err, "parsing token")
 	}
@@ -156,6 +165,15 @@ func (a *Authenticator) ParseClaims(ctx context.Context, tknStr string) (Claims,
 	if !tkn.Valid {
 		return Claims{}, errors.New("invalid token")
 	}
+
+	user, err := a.Repository.FindByEmail(ctx, claims.Subject)
+	if err != nil {
+		return Claims{}, errors.Wrap(err, "find user by email")
+	}
+
+	claims.User.ID = user.ID
+	claims.User.Role.ID = user.Role.ID
+	claims.User.Username = user.Username
 
 	return claims, nil
 }

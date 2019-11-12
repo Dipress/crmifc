@@ -12,6 +12,7 @@ import (
 
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/user"
 )
@@ -25,9 +26,36 @@ func TestArticleCreate(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
 
-		token, err := authenticator.GenerateToken(ctx, claims)
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rol role.Role
+		err := roleRepo.Create(ctx, &nr, &rol)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		nu := user.NewUser{
+			Username:     "username21",
+			Email:        "username21@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+			RoleID:       rol.ID,
+		}
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+
+		authenticator := authenticatorSetup(db)
+
+		token, err := authenticator.GenerateToken(ctx, claims.StandardClaims)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -39,7 +67,9 @@ func TestArticleCreate(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		s := setupServer(lis.Addr().String(), db, authenticator)
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -75,22 +105,48 @@ func TestFindArticle(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		repo := postgres.NewRepository(db)
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+		articleRepo := postgres.NewArticleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rol role.Role
+		err := roleRepo.Create(ctx, &nr, &rol)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		nu := user.NewUser{
+			Username:     "username21",
+			Email:        "username21@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+			RoleID:       rol.ID,
+		}
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+
+		authenticator := authenticatorSetup(db)
 
 		na := article.NewArticle{
-			UserID:     1,
+			UserID:     u.ID,
 			CategoryID: 10,
 			Title:      "my title",
 			Body:       "my body",
 		}
 
 		var art article.Article
-		err := repo.CreateArticle(ctx, &na, &art)
+		err = articleRepo.Create(ctx, &na, &art)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
-
-		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
 
 		token, err := authenticator.GenerateToken(ctx, claims)
 		if err != nil {
@@ -104,7 +160,9 @@ func TestFindArticle(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		s := setupServer(lis.Addr().String(), db, authenticator)
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -139,31 +197,48 @@ func TestUpdateArticle(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		repo := postgres.NewRepository(db)
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+		articleRepo := postgres.NewArticleRepository(db)
 
-		nu := user.NewUser{
-			Username:     "username78",
-			Email:        "username78@example.com",
-			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		nr := role.NewRole{
+			Name: "Admin",
 		}
-		var u user.User
-		err := repo.CreateUser(ctx, &nu, &u)
+
+		var rol role.Role
+		err := roleRepo.Create(ctx, &nr, &rol)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		na := article.NewArticle{
-			UserID:     u.ID,
-			CategoryID: 21,
-			Title:      "my title 1",
-			Body:       "my body 1",
+		nu := user.NewUser{
+			Username:     "username21",
+			Email:        "username21@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+			RoleID:       rol.ID,
 		}
-		var art article.Article
-		if err := repo.CreateArticle(ctx, &na, &art); err != nil {
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+
+		authenticator := authenticatorSetup(db)
+
+		na := article.NewArticle{
+			UserID:     u.ID,
+			CategoryID: 10,
+			Title:      "my title",
+			Body:       "my body",
+		}
+
+		var art article.Article
+		err = articleRepo.Create(ctx, &na, &art)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		token, err := authenticator.GenerateToken(ctx, claims)
 		if err != nil {
@@ -177,7 +252,9 @@ func TestUpdateArticle(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		s := setupServer(lis.Addr().String(), db, authenticator)
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -213,31 +290,48 @@ func TestDeleteArticle(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		repo := postgres.NewRepository(db)
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+		articleRepo := postgres.NewArticleRepository(db)
 
-		nu := user.NewUser{
-			Username:     "username88",
-			Email:        "username88@example.com",
-			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		nr := role.NewRole{
+			Name: "Admin",
 		}
-		var u user.User
-		err := repo.CreateUser(ctx, &nu, &u)
+
+		var rol role.Role
+		err := roleRepo.Create(ctx, &nr, &rol)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		na := article.NewArticle{
-			UserID:     u.ID,
-			CategoryID: 29,
-			Title:      "my title 1",
-			Body:       "my body 1",
+		nu := user.NewUser{
+			Username:     "username21",
+			Email:        "username21@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+			RoleID:       rol.ID,
 		}
-		var art article.Article
-		if err := repo.CreateArticle(ctx, &na, &art); err != nil {
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+
+		authenticator := authenticatorSetup(db)
+
+		na := article.NewArticle{
+			UserID:     u.ID,
+			CategoryID: 10,
+			Title:      "my title",
+			Body:       "my body",
+		}
+
+		var art article.Article
+		err = articleRepo.Create(ctx, &na, &art)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		token, err := authenticator.GenerateToken(ctx, claims)
 		if err != nil {
@@ -251,7 +345,9 @@ func TestDeleteArticle(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
-		s := setupServer(lis.Addr().String(), db, authenticator)
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

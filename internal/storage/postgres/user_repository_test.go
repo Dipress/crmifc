@@ -19,13 +19,14 @@ func TestCreateUser(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		r := NewRepository(db)
+		roleRepo := NewRoleRepository(db)
+		userRepo := NewUserRepository(db)
 
 		nr := role.NewRole{
 			Name: "Admin",
 		}
 		var rl role.Role
-		err := r.CreateRole(ctx, &nr, &rl)
+		err := roleRepo.Create(ctx, &nr, &rl)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -40,7 +41,7 @@ func TestCreateUser(t *testing.T) {
 			}
 
 			var user user.User
-			err := r.CreateUser(ctx, &nu, &user)
+			err := userRepo.Create(ctx, &nu, &user)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -61,13 +62,14 @@ func TestUserFind(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		r := NewRepository(db)
+		roleRepo := NewRoleRepository(db)
+		userRepo := NewUserRepository(db)
 
 		nr := role.NewRole{
 			Name: "Admin",
 		}
 		var rl role.Role
-		err := r.CreateRole(ctx, &nr, &rl)
+		err := roleRepo.Create(ctx, &nr, &rl)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -80,14 +82,14 @@ func TestUserFind(t *testing.T) {
 		}
 
 		var user user.User
-		err = r.CreateUser(ctx, &nu, &user)
+		err = userRepo.Create(ctx, &nu, &user)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		t.Log("\ttest:0\tshould find the role into the database")
+		t.Log("\ttest:0\tshould find the user into the database")
 		{
-			_, err := r.FindUser(ctx, user.ID)
+			_, err := userRepo.Find(ctx, user.ID)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -100,7 +102,8 @@ func TestUniqueUsername(t *testing.T) {
 	{
 		db, teardown := postgresDB(t)
 		defer teardown()
-		r := NewRepository(db)
+
+		userRepo := NewUserRepository(db)
 
 		nu := user.NewUser{
 			Username:     "username1",
@@ -113,19 +116,19 @@ func TestUniqueUsername(t *testing.T) {
 		defer cancel()
 
 		var user user.User
-		err := r.CreateUser(ctx, &nu, &user)
+		err := userRepo.Create(ctx, &nu, &user)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould return error")
 		{
-			err := r.UniqueUsername(ctx, "username1")
+			err := userRepo.UniqueUsername(ctx, "username1")
 			assert.Error(t, err, "username already exists")
 		}
 		t.Log("\ttest:0\tshould return nil")
 		{
-			err := r.UniqueUsername(ctx, "username2")
+			err := userRepo.UniqueUsername(ctx, "username2")
 			assert.Nil(t, err)
 		}
 	}
@@ -137,7 +140,8 @@ func TestUpdateUser(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		roleRepo := NewRoleRepository(db)
+		userRepo := NewUserRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -147,7 +151,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		var rl role.Role
-		err := r.CreateRole(ctx, &nr, &rl)
+		err := roleRepo.Create(ctx, &nr, &rl)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -160,7 +164,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		var user user.User
-		err = r.CreateUser(ctx, &nu, &user)
+		err = userRepo.Create(ctx, &nu, &user)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -172,7 +176,7 @@ func TestUpdateUser(t *testing.T) {
 			user.Email = "hacket@example.com"
 			user.Role.ID = 3
 
-			err := r.UpdateUser(ctx, 1, &user)
+			err := userRepo.Update(ctx, 1, &user)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -185,7 +189,7 @@ func TestUniqueEmail(t *testing.T) {
 	{
 		db, teardown := postgresDB(t)
 		defer teardown()
-		r := NewRepository(db)
+		userRepo := NewUserRepository(db)
 
 		nu := user.NewUser{
 			Username:     "username5",
@@ -198,19 +202,19 @@ func TestUniqueEmail(t *testing.T) {
 		defer cancel()
 
 		var user user.User
-		err := r.CreateUser(ctx, &nu, &user)
+		err := userRepo.Create(ctx, &nu, &user)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould return error")
 		{
-			err := r.UniqueEmail(ctx, "username5@example.com")
+			err := userRepo.UniqueEmail(ctx, "username5@example.com")
 			assert.Error(t, err, "email already exists")
 		}
 		t.Log("\ttest:0\tshould return nil")
 		{
-			err := r.UniqueEmail(ctx, "username6@example.com")
+			err := userRepo.UniqueEmail(ctx, "username6@example.com")
 			assert.Nil(t, err)
 		}
 	}
@@ -222,7 +226,8 @@ func TestListUsers(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		roleRepo := NewRoleRepository(db)
+		userRepo := NewUserRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -231,7 +236,7 @@ func TestListUsers(t *testing.T) {
 			Name: "Admin",
 		}
 		var rl role.Role
-		err := r.CreateRole(ctx, &nr, &rl)
+		err := roleRepo.Create(ctx, &nr, &rl)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -251,13 +256,13 @@ func TestListUsers(t *testing.T) {
 		}
 
 		var usr1 user.User
-		err = r.CreateUser(ctx, &nu1, &usr1)
+		err = userRepo.Create(ctx, &nu1, &usr1)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		var usr2 user.User
-		err = r.CreateUser(ctx, &nu2, &usr2)
+		err = userRepo.Create(ctx, &nu2, &usr2)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -265,7 +270,7 @@ func TestListUsers(t *testing.T) {
 		t.Log("\ttest:0\tshould show list of users")
 		{
 			var users user.Users
-			err := r.ListUsers(ctx, &users)
+			err := userRepo.List(ctx, &users)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -283,7 +288,7 @@ func TestFindUserByEmail(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		userRepo := NewUserRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -295,14 +300,14 @@ func TestFindUserByEmail(t *testing.T) {
 		}
 
 		var usr user.User
-		err := r.CreateUser(ctx, &nu, &usr)
+		err := userRepo.Create(ctx, &nu, &usr)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould find user by email")
 		{
-			err := r.FindByEmail(ctx, usr.Email, &usr)
+			_, err := userRepo.FindByEmail(ctx, usr.Email)
 			assert.Nil(t, err)
 		}
 	}
