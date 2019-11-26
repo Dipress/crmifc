@@ -5,16 +5,31 @@ import (
 	"database/sql"
 
 	"github.com/dipress/crmifc/internal/category"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
+
+// CategoryRepository holds CRUD actions.
+type CategoryRepository struct {
+	db *sqlx.DB
+}
+
+//NewCategoryRepository factory prepares the repository to work.
+func NewCategoryRepository(db *sql.DB) *CategoryRepository {
+	r := CategoryRepository{
+		db: sqlx.NewDb(db, driverName),
+	}
+
+	return &r
+}
 
 const createCategoryQuery = `INSERT INTO 
 	categories (name) 
 	VALUES ($1) 
 	RETURNING id, name, created_at, updated_at`
 
-// CreateCategory inserts a new category into the database.
-func (r *Repository) CreateCategory(ctx context.Context, f *category.NewCategory, cat *category.Category) error {
+// Create inserts a new category into the database.
+func (r *CategoryRepository) Create(ctx context.Context, f *category.NewCategory, cat *category.Category) error {
 	if err := r.db.QueryRowContext(ctx, createCategoryQuery, f.Name).
 		Scan(&cat.ID, &cat.Name, &cat.CreatedAt, &cat.UpdatedAt); err != nil {
 		return errors.Wrap(err, "query context scan")
@@ -25,8 +40,8 @@ func (r *Repository) CreateCategory(ctx context.Context, f *category.NewCategory
 
 const findCategoryQuery = `SELECT id, name, created_at, updated_at FROM categories WHERE id = $1`
 
-// FindCategory finds a category by id.
-func (r *Repository) FindCategory(ctx context.Context, id int) (*category.Category, error) {
+// Find finds a category by id.
+func (r *CategoryRepository) Find(ctx context.Context, id int) (*category.Category, error) {
 	var cat category.Category
 
 	if err := r.db.QueryRowContext(ctx, findCategoryQuery, id).
@@ -42,8 +57,8 @@ func (r *Repository) FindCategory(ctx context.Context, id int) (*category.Catego
 
 const updateCategoryQuery = `UPDATE categories SET name=:name, updated_at=now() WHERE id=:id`
 
-// UpdateCategory updates a category by id.
-func (r *Repository) UpdateCategory(ctx context.Context, id int, cat *category.Category) error {
+// Update updates a category by id.
+func (r *CategoryRepository) Update(ctx context.Context, id int, cat *category.Category) error {
 	stmt, err := r.db.PrepareNamed(updateCategoryQuery)
 	if err != nil {
 		return errors.Wrap(err, "prepare named")
@@ -66,8 +81,8 @@ func (r *Repository) UpdateCategory(ctx context.Context, id int, cat *category.C
 
 const deleteCategoryQuery = `DELETE FROM categories WHERE id=:id`
 
-// DeleteCategory deletes category by id.
-func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
+// Delete deletes category by id.
+func (r *CategoryRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteCategoryQuery)
 	if err != nil {
 		return errors.Wrap(err, "prepare named")
@@ -89,8 +104,8 @@ func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
 
 const listCategoryQuery = `SELECT * FROM categories`
 
-// ListCategories shows all categories.
-func (r *Repository) ListCategories(ctx context.Context, cat *category.Categories) error {
+// List shows all categories.
+func (r *CategoryRepository) List(ctx context.Context, cat *category.Categories) error {
 	rows, err := r.db.QueryxContext(ctx, listCategoryQuery)
 	if err != nil {
 		return errors.Wrap(err, "query rows")

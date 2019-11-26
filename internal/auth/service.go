@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/dipress/blog/kit/auth"
+	"github.com/dipress/crmifc/internal/kit/auth"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dipress/crmifc/internal/user"
@@ -23,9 +23,9 @@ var (
 	ErrWrongPassword = errors.New("wrong password")
 )
 
-// Repository allows working with a database.
-type Repository interface {
-	FindByEmail(ctx context.Context, email string, user *user.User) error
+// UserRepository allows working with a database.
+type UserRepository interface {
+	FindByEmail(ctx context.Context, email string) (*user.User, error)
 }
 
 // TokenGenerator generates token for authenticated user.
@@ -36,7 +36,7 @@ type TokenGenerator interface {
 // Service holds required data for user
 // authentication.
 type Service struct {
-	Repository
+	UserRepository
 	TokenGenerator
 	ExpireAfter time.Duration
 }
@@ -56,9 +56,9 @@ type Token struct {
 
 // NewService factory takes in required arguments
 // and returns a pointer to the Service instance.
-func NewService(r Repository, t TokenGenerator, exp time.Duration) *Service {
+func NewService(r UserRepository, t TokenGenerator, exp time.Duration) *Service {
 	s := Service{
-		Repository:     r,
+		UserRepository: r,
 		TokenGenerator: t,
 		ExpireAfter:    exp,
 	}
@@ -69,8 +69,8 @@ func NewService(r Repository, t TokenGenerator, exp time.Duration) *Service {
 // Authenticate allows authenticating user by given email and password
 // and set t Token value as generated token.
 func (s *Service) Authenticate(ctx context.Context, email, password string, t *Token) error {
-	var user user.User
-	if err := s.Repository.FindByEmail(ctx, email, &user); err != nil {
+	user, err := s.UserRepository.FindByEmail(ctx, email)
+	if err != nil {
 		return errors.Wrap(err, "find user by email")
 	}
 
@@ -84,7 +84,7 @@ func (s *Service) Authenticate(ctx context.Context, email, password string, t *T
 	// Now we need to create the token for the user.
 	claims := auth.NewClaims(user.Email, time.Now(), s.ExpireAfter)
 
-	tknStr, err := s.GenerateToken(ctx, claims)
+	tknStr, err := s.GenerateToken(ctx, claims.StandardClaims)
 	if err != nil {
 		return errors.Wrap(err, "generate token")
 	}

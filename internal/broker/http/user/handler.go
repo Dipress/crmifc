@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -14,23 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
-
-// Handler allows to handle requests.
-type Handler interface {
-	Handle(w http.ResponseWriter, r *http.Request) error
-}
-
-// HTTPHandler allows to implement ServeHTTP for Handler.
-type HTTPHandler struct {
-	Handler
-}
-
-// ServeHTTP implements http.Handler.
-func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := h.Handle(w, r); err != nil {
-		log.Printf("serve http: %+v\n", err)
-	}
-}
 
 // Authenticater abstraction for authenticate service.
 type Authenticater interface {
@@ -173,7 +155,7 @@ func (h FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	if _, err := w.Write(data); err != nil {
 		return errors.Wrap(err, "write response")
 	}
-	
+
 	return nil
 }
 

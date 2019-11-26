@@ -1,243 +1,44 @@
 package http
 
 import (
-	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/dipress/crmifc/internal/storage/postgres"
-	"github.com/dipress/crmifc/internal/validation"
 	"github.com/gorilla/mux"
 
-	articleCreate "github.com/dipress/crmifc/internal/article/create"
-	articleDelete "github.com/dipress/crmifc/internal/article/delete"
-	articleFind "github.com/dipress/crmifc/internal/article/find"
-	articleUpdate "github.com/dipress/crmifc/internal/article/update"
+	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/auth"
-	"github.com/dipress/crmifc/internal/broker/http/article"
-	"github.com/dipress/crmifc/internal/broker/http/category"
-	"github.com/dipress/crmifc/internal/broker/http/role"
+	articleHandlers "github.com/dipress/crmifc/internal/broker/http/article"
+	"github.com/dipress/crmifc/internal/broker/http/handler"
 	"github.com/dipress/crmifc/internal/broker/http/user"
-	categoryCreate "github.com/dipress/crmifc/internal/category/create"
-	categoryDelete "github.com/dipress/crmifc/internal/category/delete"
-	categoryFind "github.com/dipress/crmifc/internal/category/find"
-	categoryList "github.com/dipress/crmifc/internal/category/list"
-	categoryUpdate "github.com/dipress/crmifc/internal/category/update"
 	authEng "github.com/dipress/crmifc/internal/kit/auth"
-	roleCreate "github.com/dipress/crmifc/internal/role/create"
-	roleDelete "github.com/dipress/crmifc/internal/role/delete"
-	roleFind "github.com/dipress/crmifc/internal/role/find"
-	roleList "github.com/dipress/crmifc/internal/role/list"
-	roleUpdate "github.com/dipress/crmifc/internal/role/update"
-	userCreate "github.com/dipress/crmifc/internal/user/create"
-	userDelete "github.com/dipress/crmifc/internal/user/delete"
-	userFind "github.com/dipress/crmifc/internal/user/find"
-	userList "github.com/dipress/crmifc/internal/user/list"
-	userUpdate "github.com/dipress/crmifc/internal/user/update"
 )
 
 const (
 	timeout = 15 * time.Second
 )
 
+// Services contains all the services.
+type Services struct {
+	Auth    *auth.Service
+	Article *article.Service
+}
+
 // NewServer prepare http server to work.
-func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *http.Server {
-	mux := mux.NewRouter()
-
-	repo := postgres.NewRepository(db)
-	authenticateService := auth.NewService(repo, authenticator, time.Hour*24)
-	rolesCreateService := roleCreate.NewService(repo, &validation.Role{})
-	roleFindService := roleFind.NewService(repo)
-	roleUpdateService := roleUpdate.NewService(repo, &validation.Role{})
-	roleDeleteService := roleDelete.NewService(repo)
-	roleListService := roleList.NewService(repo)
-
-	userCreateService := userCreate.NewService(repo, &validation.User{})
-	userFindService := userFind.NewService(repo)
-	userUpdateService := userUpdate.NewService(repo, &validation.User{})
-	userDeleteService := userDelete.NewService(repo)
-	userListService := userList.NewService(repo)
-
-	categoryCreateService := categoryCreate.NewService(repo, &validation.Category{})
-	categoryUpdateService := categoryUpdate.NewService(repo, &validation.Category{})
-	categoryFindService := categoryFind.NewService(repo)
-	categoryDeleteService := categoryDelete.NewService(repo)
-	categoryListService := categoryList.NewService(repo)
-
-	articleCreateService := articleCreate.NewService(repo, &validation.Article{})
-	articleFindService := articleFind.NewService(repo)
-	articleUpdateService := articleUpdate.NewService(repo, &validation.Article{})
-	articleDeleteService := articleDelete.NewService(repo)
+func NewServer(addr string, services *Services, authenticator *authEng.Authenticator) *http.Server {
+	mux := mux.NewRouter().StrictSlash(true)
 
 	// Auth handler.
 	authenticateHandler := user.AuthHandler{
-		Authenticater: authenticateService,
+		Authenticater: services.Auth,
 	}
 
 	// Auth route.
-	mux.HandleFunc("/signin", user.HTTPHandler{
-		Handler: &authenticateHandler,
-	}.ServeHTTP).Methods(http.MethodPost)
+	mux.Handle("/signin", toHTTP(&authenticateHandler)).Methods(http.MethodPost)
 
-	// User handlers.
-	userCreateHandler := user.CreateHandler{
-		Creater: userCreateService,
-	}
-
-	userFindHandler := user.FindHandler{
-		Finder: userFindService,
-	}
-
-	userUpdateHandler := user.UpdateHandler{
-		Updater: userUpdateService,
-	}
-
-	userDeleteHandler := user.DeleteHandler{
-		Deleter: userDeleteService,
-	}
-
-	userListHandler := user.ListHandler{
-		Lister: userListService,
-	}
-
-	// Role handlers.
-	roleCreateHandler := role.CreateHandler{
-		Creater: rolesCreateService,
-	}
-
-	roleFindHandler := role.FindHandler{
-		Finder: roleFindService,
-	}
-
-	roleUpdateHandler := role.UpdateHandler{
-		Updater: roleUpdateService,
-	}
-
-	roleDeleteHandler := role.DeleteHandler{
-		Deleter: roleDeleteService,
-	}
-
-	roleListHandler := role.ListHandler{
-		Lister: roleListService,
-	}
-
-	// Category handlers.
-	categoryCreateHandler := category.CreateHandler{
-		Creater: categoryCreateService,
-	}
-
-	categoryFindHandler := category.FindHandler{
-		Finder: categoryFindService,
-	}
-
-	categoryUpdateHandler := category.UpdateHandler{
-		Updater: categoryUpdateService,
-	}
-
-	categoryDeleteHandler := category.DeleteHandler{
-		Deleter: categoryDeleteService,
-	}
-
-	categoryListHandler := category.ListHandler{
-		Lister: categoryListService,
-	}
-
-	// Article handlers.
-	articleCreateHandler := article.CreateHandler{
-		Creater: articleCreateService,
-	}
-
-	articleFindHandler := article.FindHandler{
-		Finder: articleFindService,
-	}
-
-	articleUpdateHandler := article.UpdateHandler{
-		Updater: articleUpdateService,
-	}
-
-	articleDeleteHandler := article.DeleteHandler{
-		Deleter: articleDeleteService,
-	}
-
-	// User routes.
-	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
-		Handler: &userCreateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPost)
-
-	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
-		Handler: &userFindHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
-		Handler: &userUpdateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPut)
-
-	mux.HandleFunc("/users/{id}", AuthMiddleware(user.HTTPHandler{
-		Handler: &userDeleteHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
-
-	mux.HandleFunc("/users", AuthMiddleware(user.HTTPHandler{
-		Handler: &userListHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	// Role routes.
-	mux.HandleFunc("/roles", AuthMiddleware(role.HTTPHandler{
-		Handler: &roleCreateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPost)
-
-	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
-		Handler: &roleFindHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
-		Handler: &roleUpdateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPut)
-
-	mux.HandleFunc("/roles/{id}", AuthMiddleware(role.HTTPHandler{
-		Handler: &roleDeleteHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
-
-	mux.HandleFunc("/roles", AuthMiddleware(role.HTTPHandler{
-		Handler: &roleListHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	// Category routes.
-	mux.HandleFunc("/categories", AuthMiddleware(category.HTTPHandler{
-		Handler: &categoryCreateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPost)
-
-	mux.HandleFunc("/categories/{id}", AuthMiddleware(category.HTTPHandler{
-		Handler: &categoryFindHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	mux.HandleFunc("/categories/{id}", AuthMiddleware(category.HTTPHandler{
-		Handler: &categoryUpdateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPut)
-
-	mux.HandleFunc("/categories/{id}", AuthMiddleware(category.HTTPHandler{
-		Handler: &categoryDeleteHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
-
-	mux.HandleFunc("/categories", AuthMiddleware(category.HTTPHandler{
-		Handler: &categoryListHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	// Article routes.
-	mux.HandleFunc("/articles", AuthMiddleware(article.HTTPHandler{
-		Handler: &articleCreateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPost)
-
-	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
-		Handler: &articleFindHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodGet)
-
-	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
-		Handler: &articleUpdateHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodPut)
-
-	mux.HandleFunc("/articles/{id}", AuthMiddleware(article.HTTPHandler{
-		Handler: &articleDeleteHandler,
-	}, authenticator).ServeHTTP).Methods(http.MethodDelete)
+	articles := mux.PathPrefix("/articles").Subrouter()
+	articleHandlers.Prepare(articles, services.Article, finalizeMiddleware(authenticator))
 
 	s := http.Server{
 		Addr:         addr,
@@ -247,4 +48,25 @@ func NewServer(addr string, db *sql.DB, authenticator *authEng.Authenticator) *h
 	}
 
 	return &s
+}
+
+// toHTTP allows to implement ServeHTTP for Handler.
+func toHTTP(base handler.Handler) http.Handler {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := base.Handle(w, r); err != nil {
+			log.Printf("serve http: %+v\n", err)
+		}
+	})
+
+	return h
+}
+
+func finalizeMiddleware(authenticator *authEng.Authenticator) func(handler.Handler) http.Handler {
+	f := func(h handler.Handler) http.Handler {
+		f := AuthMiddleware(toHTTP(h), authenticator)
+
+		return f
+	}
+
+	return f
 }

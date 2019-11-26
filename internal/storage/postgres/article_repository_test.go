@@ -13,7 +13,7 @@ func TestCreateArticle(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewArticleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -28,7 +28,7 @@ func TestCreateArticle(t *testing.T) {
 			}
 
 			var art article.Article
-			err := r.CreateArticle(ctx, &na, &art)
+			err := r.Create(ctx, &na, &art)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -50,7 +50,7 @@ func TestFindArticle(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		r := NewRepository(db)
+		r := NewArticleRepository(db)
 
 		na := article.NewArticle{
 			UserID:     2,
@@ -60,14 +60,14 @@ func TestFindArticle(t *testing.T) {
 		}
 
 		var art article.Article
-		err := r.CreateArticle(ctx, &na, &art)
+		err := r.Create(ctx, &na, &art)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould find the article into the database")
 		{
-			_, err := r.FindArticle(ctx, art.ID)
+			_, err := r.Find(ctx, art.ID)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -81,7 +81,7 @@ func TestUpdateArticle(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewArticleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -94,7 +94,7 @@ func TestUpdateArticle(t *testing.T) {
 		}
 
 		var art article.Article
-		err := r.CreateArticle(ctx, &na, &art)
+		err := r.Create(ctx, &na, &art)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -105,7 +105,7 @@ func TestUpdateArticle(t *testing.T) {
 			art.Body = "my update body"
 			art.CategoryID = 13
 
-			err := r.UpdateArticle(ctx, 1, &art)
+			err := r.Update(ctx, 1, &art)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -119,7 +119,7 @@ func TestArticleDelete(t *testing.T) {
 		db, teardown := postgresDB(t)
 		defer teardown()
 
-		r := NewRepository(db)
+		r := NewArticleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -132,14 +132,14 @@ func TestArticleDelete(t *testing.T) {
 		}
 
 		var art article.Article
-		err := r.CreateArticle(ctx, &na, &art)
+		err := r.Create(ctx, &na, &art)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		t.Log("\ttest:0\tshould delete the article into the database")
 		{
-			err := r.DeleteArticle(ctx, art.ID)
+			err := r.Delete(ctx, art.ID)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

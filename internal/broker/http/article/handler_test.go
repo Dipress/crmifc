@@ -8,35 +8,37 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/validation"
-	"github.com/gorilla/mux"
 )
 
 func TestCreateHandler(t *testing.T) {
 	tests := []struct {
-		name       string
-		createFunc func(ctx context.Context, f *article.Form) (*article.Article, error)
-		code       int
+		name        string
+		serviceFunc func(m *MockService)
+		code        int
 	}{
 		{
 			name: "ok",
-			createFunc: func(ctx context.Context, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, nil
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&article.Article{}, nil)
 			},
 			code: http.StatusOK,
 		},
 		{
 			name: "validation error",
-			createFunc: func(ctx context.Context, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, make(validation.Errors)
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&article.Article{}, make(validation.Errors))
 			},
 			code: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "internal error",
-			createFunc: func(ctx context.Context, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, errors.New("mock error")
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&article.Article{}, errors.New("mock error"))
 			},
 			code: http.StatusInternalServerError,
 		},
@@ -46,7 +48,13 @@ func TestCreateHandler(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := CreateHandler{createFunc(tc.createFunc)}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := NewMockService(ctrl)
+			tc.serviceFunc(service)
+
+			h := CreateHandler{service}
 			w := httptest.NewRecorder()
 
 			r := httptest.NewRequest(http.MethodPost, "http://example.com", strings.NewReader("{}"))
@@ -59,29 +67,23 @@ func TestCreateHandler(t *testing.T) {
 	}
 }
 
-type createFunc func(ctx context.Context, f *article.Form) (*article.Article, error)
-
-func (c createFunc) Create(ctx context.Context, f *article.Form) (*article.Article, error) {
-	return c(ctx, f)
-}
-
 func TestFindHandler(t *testing.T) {
 	tests := []struct {
-		name     string
-		findFunc func(ctx context.Context, id int) (*article.Article, error)
-		code     int
+		name        string
+		serviceFunc func(m *MockService)
+		code        int
 	}{
 		{
 			name: "ok",
-			findFunc: func(ctx context.Context, id int) (*article.Article, error) {
-				return &article.Article{}, nil
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Find(gomock.Any(), gomock.Any()).Return(&article.Article{}, nil)
 			},
 			code: http.StatusOK,
 		},
 		{
 			name: "internal error",
-			findFunc: func(ctx context.Context, id int) (*article.Article, error) {
-				return &article.Article{}, errors.New("mock error")
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Find(gomock.Any(), gomock.Any()).Return(&article.Article{}, errors.New("mock error"))
 			},
 			code: http.StatusInternalServerError,
 		},
@@ -91,7 +93,13 @@ func TestFindHandler(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := FindHandler{findFunc(tc.findFunc)}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := NewMockService(ctrl)
+			tc.serviceFunc(service)
+
+			h := FindHandler{service}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
@@ -104,36 +112,30 @@ func TestFindHandler(t *testing.T) {
 	}
 }
 
-type findFunc func(ctx context.Context, id int) (*article.Article, error)
-
-func (f findFunc) Find(ctx context.Context, id int) (*article.Article, error) {
-	return f(ctx, id)
-}
-
 func TestUpdateHandler(t *testing.T) {
 	tests := []struct {
-		name       string
-		updateFunc func(ctx context.Context, id int, f *article.Form) (*article.Article, error)
-		code       int
+		name        string
+		serviceFunc func(m *MockService)
+		code        int
 	}{
 		{
 			name: "ok",
-			updateFunc: func(ctx context.Context, id int, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, nil
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(&article.Article{}, nil)
 			},
 			code: http.StatusOK,
 		},
 		{
 			name: "validation error",
-			updateFunc: func(ctx context.Context, id int, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, make(validation.Errors)
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(&article.Article{}, make(validation.Errors))
 			},
 			code: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "internal error",
-			updateFunc: func(ctx context.Context, id int, f *article.Form) (*article.Article, error) {
-				return &article.Article{}, errors.New("mock error")
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(&article.Article{}, errors.New("mock error"))
 			},
 			code: http.StatusInternalServerError,
 		},
@@ -143,7 +145,13 @@ func TestUpdateHandler(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := UpdateHandler{updateFunc(tc.updateFunc)}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := NewMockService(ctrl)
+			tc.serviceFunc(service)
+
+			h := UpdateHandler{service}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPut, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
@@ -156,29 +164,23 @@ func TestUpdateHandler(t *testing.T) {
 	}
 }
 
-type updateFunc func(ctx context.Context, id int, f *article.Form) (*article.Article, error)
-
-func (u updateFunc) Update(ctx context.Context, id int, f *article.Form) (*article.Article, error) {
-	return u(ctx, id, f)
-}
-
 func TestDeleteHandler(t *testing.T) {
 	tests := []struct {
-		name       string
-		deleteFunc func(ctx context.Context, id int) error
-		code       int
+		name        string
+		serviceFunc func(m *MockService)
+		code        int
 	}{
 		{
 			name: "ok",
-			deleteFunc: func(ctx context.Context, id int) error {
-				return nil
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			code: http.StatusOK,
 		},
 		{
 			name: "repository error",
-			deleteFunc: func(ctx context.Context, id int) error {
-				return errors.New("mock error")
+			serviceFunc: func(mock *MockService) {
+				mock.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("mock error"))
 			},
 			code: http.StatusInternalServerError,
 		},
@@ -188,7 +190,13 @@ func TestDeleteHandler(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := DeleteHandler{deleteFunc(tc.deleteFunc)}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := NewMockService(ctrl)
+			tc.serviceFunc(service)
+
+			h := DeleteHandler{service}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodDelete, "http://example.com", strings.NewReader("{}"))
 			r = mux.SetURLVars(r, map[string]string{"id": "1"})
