@@ -14,6 +14,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Handler allows to handle requests.
+type Handler interface {
+	Handle(w http.ResponseWriter, r *http.Request) error
+}
+
 // Authenticater abstraction for authenticate service.
 type Authenticater interface {
 	Authenticate(ctx context.Context, email, password string, t *auth.Token) error

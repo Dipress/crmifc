@@ -40,6 +40,8 @@ func TestSignIn(t *testing.T) {
 			log.Fatalf("failed to listen: %v", err)
 		}
 
+		authenticator := authenticatorSetup(db)
+
 		services := setupServices(db, authenticator)
 
 		s := setupServer(lis.Addr().String(), services, authenticator)

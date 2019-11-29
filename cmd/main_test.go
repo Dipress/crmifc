@@ -27,8 +27,7 @@ const (
 )
 
 var (
-	db            *sql.DB
-	authenticator *auth.Authenticator
+	db *sql.DB
 )
 
 func TestMain(m *testing.M) {

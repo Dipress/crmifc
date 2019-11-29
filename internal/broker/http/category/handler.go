@@ -3,10 +3,10 @@ package category
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/dipress/crmifc/internal/broker/http/handler"
 	"github.com/dipress/crmifc/internal/broker/http/response"
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/validation"
@@ -14,51 +14,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+// go:generate mockgen -source=handler.go -package=category -destination=handler.mock.go Service
+
 // Handler allows to handle requests.
 type Handler interface {
 	Handle(w http.ResponseWriter, r *http.Request) error
 }
 
-// HTTPHandler allows to implement ServeHTTP for Handler.
-type HTTPHandler struct {
-	Handler
-}
-
-// ServeHTTP implements http.Handler.
-func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := h.Handle(w, r); err != nil {
-		log.Printf("serve http: %+v\n", err)
-	}
-}
-
-// Creater abstraction for create service.
-type Creater interface {
+// Service contains all services.
+type Service interface {
 	Create(ctx context.Context, f *category.Form) (*category.Category, error)
-}
-
-// Finder abstraction for find service.
-type Finder interface {
 	Find(ctx context.Context, id int) (*category.Category, error)
-}
-
-// Updater abstraction for update service.
-type Updater interface {
 	Update(ctx context.Context, id int, f *category.Form) (*category.Category, error)
-}
-
-// Deleter abstraction for delete service.
-type Deleter interface {
 	Delete(ctx context.Context, id int) error
-}
-
-// Lister abstraction for list service.
-type Lister interface {
 	List(ctx context.Context) (*category.Categories, error)
 }
 
 // CreateHandler for create requests.
 type CreateHandler struct {
-	Creater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -74,7 +48,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
 	}
 
-	category, err := h.Creater.Create(r.Context(), &f)
+	category, err := h.Create(r.Context(), &f)
 	if err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
@@ -86,11 +60,11 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err = category.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -98,7 +72,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // FindHandler for find requests.
 type FindHandler struct {
-	Finder
+	Service
 }
 
 // Handle implements Handler interface.
@@ -110,7 +84,7 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	cat, err := h.Finder.Find(r.Context(), id)
+	cat, err := h.Find(r.Context(), id)
 	if err != nil {
 		switch errors.Cause(err) {
 		case category.ErrNotFound:
@@ -122,11 +96,11 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err := cat.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -134,7 +108,7 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // UpdateHandler for update requests.
 type UpdateHandler struct {
-	Updater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -156,7 +130,7 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
 	}
 
-	cat, err := h.Updater.Update(r.Context(), id, &f)
+	cat, err := h.Update(r.Context(), id, &f)
 	if err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
@@ -168,18 +142,18 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err = cat.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 	return nil
 }
 
 // type DeleteHandler for delete request.
 type DeleteHandler struct {
-	Deleter
+	Service
 }
 
 // Handle implements Handler interface.
@@ -191,7 +165,7 @@ func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	if err := h.Deleter.Delete(r.Context(), id); err != nil {
+	if err := h.Delete(r.Context(), id); err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "delete category")
 	}
 
@@ -200,24 +174,39 @@ func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // ListHanlder for list requests.
 type ListHandler struct {
-	Lister
+	Service
 }
 
 // Handle implements Handler interface.
 func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
-	categories, err := h.Lister.List(r.Context())
+	categories, err := h.List(r.Context())
 	if err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "list of roles")
 	}
 
 	data, err := categories.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
+}
+
+// Prepare prepares routes to use.
+func Prepare(subrouter *mux.Router, service Service, middleware func(handler.Handler) http.Handler) {
+	create := CreateHandler{service}
+	find := FindHandler{service}
+	update := UpdateHandler{service}
+	delete := DeleteHandler{service}
+	list := ListHandler{service}
+
+	subrouter.Handle("", middleware(&create)).Methods(http.MethodPost)
+	subrouter.Handle("/{id}", middleware(&find)).Methods(http.MethodGet)
+	subrouter.Handle("/{id}", middleware(&update)).Methods(http.MethodPut)
+	subrouter.Handle("/{id}", middleware(&delete)).Methods(http.MethodDelete)
+	subrouter.Handle("", middleware(&list)).Methods(http.MethodGet)
 }
