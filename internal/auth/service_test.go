@@ -20,16 +20,15 @@ func Test_Service(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		repositoryFunc     func(ctx context.Context, email string, user *user.User) error
+		repositoryFunc     func(ctx context.Context, email string) (*user.User, error)
 		tokenGeneratorFunc func(ctx context.Context, claims jwt.Claims) (string, error)
 		wantErr            bool
 		expect             Token
 	}{
 		{
 			name: "ok",
-			repositoryFunc: func(ctx context.Context, email string, user *user.User) error {
-				user.PasswordHash = string(pw)
-				return nil
+			repositoryFunc: func(ctx context.Context, email string) (*user.User, error) {
+				return &user.User{PasswordHash: string(pw)}, nil
 			},
 			tokenGeneratorFunc: func(ctx context.Context, claims jwt.Claims) (string, error) {
 				return "token", nil
@@ -40,23 +39,22 @@ func Test_Service(t *testing.T) {
 		},
 		{
 			name: "email not found",
-			repositoryFunc: func(ctx context.Context, email string, user *user.User) error {
-				return ErrEmailNotFound
+			repositoryFunc: func(ctx context.Context, email string) (*user.User, error) {
+				return &user.User{}, ErrEmailNotFound
 			},
 			wantErr: true,
 		},
 		{
 			name: "wrong password",
-			repositoryFunc: func(ctx context.Context, email string, user *user.User) error {
-				return nil
+			repositoryFunc: func(ctx context.Context, email string) (*user.User, error) {
+				return &user.User{}, nil
 			},
 			wantErr: true,
 		},
 		{
 			name: "token generate",
-			repositoryFunc: func(ctx context.Context, email string, user *user.User) error {
-				user.PasswordHash = string(pw)
-				return nil
+			repositoryFunc: func(ctx context.Context, email string) (*user.User, error) {
+				return &user.User{PasswordHash: string(pw)}, nil
 			},
 			tokenGeneratorFunc: func(ctx context.Context, claims jwt.Claims) (string, error) {
 				return "", errors.New("mock error")
@@ -90,10 +88,10 @@ func Test_Service(t *testing.T) {
 	}
 }
 
-type repositoryFunc func(ctx context.Context, email string, user *user.User) error
+type repositoryFunc func(ctx context.Context, email string) (*user.User, error)
 
-func (r repositoryFunc) FindByEmail(ctx context.Context, email string, user *user.User) error {
-	return r(ctx, email, user)
+func (r repositoryFunc) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+	return r(ctx, email)
 }
 
 type tokenGeneratorFunc func(ctx context.Context, claims jwt.Claims) (string, error)
