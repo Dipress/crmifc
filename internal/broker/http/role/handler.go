@@ -3,10 +3,10 @@ package role
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/dipress/crmifc/internal/broker/http/handler"
 	"github.com/dipress/crmifc/internal/broker/http/response"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/validation"
@@ -14,51 +14,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+// go:generate mockgen -source=handler.go -package=role -destination=handler.mock.go Service
+
 // Handler allows to handle requests.
 type Handler interface {
 	Handle(w http.ResponseWriter, r *http.Request) error
 }
 
-// HTTPHandler allows to implement ServeHTTP for Handler.
-type HTTPHandler struct {
-	Handler
-}
-
-// ServeHTTP implements http.Handler.
-func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := h.Handle(w, r); err != nil {
-		log.Printf("serve http: %+v\n", err)
-	}
-}
-
-// Creater abstraction for create service.
-type Creater interface {
+// Service contains all services.
+type Service interface {
 	Create(ctx context.Context, f *role.Form) (*role.Role, error)
-}
-
-// Finder abstraction for find service.
-type Finder interface {
 	Find(ctx context.Context, id int) (*role.Role, error)
-}
-
-// Updater abstraction for update service.
-type Updater interface {
 	Update(ctx context.Context, id int, f *role.Form) (*role.Role, error)
-}
-
-// Deleter abstraction for delete service.
-type Deleter interface {
 	Delete(ctx context.Context, id int) error
-}
-
-// Lister abstraction for list service.
-type Lister interface {
 	List(ctx context.Context) (*role.Roles, error)
 }
 
 // CreateHandler for create requests.
 type CreateHandler struct {
-	Creater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -74,7 +48,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
 	}
 
-	role, err := h.Creater.Create(r.Context(), &f)
+	role, err := h.Create(r.Context(), &f)
 	if err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
@@ -86,11 +60,11 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err = role.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	return nil
@@ -98,7 +72,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // FindHandler for find requests.
 type FindHandler struct {
-	Finder
+	Service
 }
 
 // Handle implements Handler interface.
@@ -109,7 +83,7 @@ func (rol *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	rl, err := rol.Finder.Find(r.Context(), id)
+	rl, err := rol.Find(r.Context(), id)
 	if err != nil {
 		switch errors.Cause(err) {
 		case role.ErrNotFound:
@@ -121,11 +95,11 @@ func (rol *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err := rl.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	return nil
@@ -133,7 +107,7 @@ func (rol *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // UpdateHandler for update requests.
 type UpdateHandler struct {
-	Updater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -155,7 +129,7 @@ func (rol *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
 	}
 
-	rl, err := rol.Updater.Update(r.Context(), id, &f)
+	rl, err := rol.Update(r.Context(), id, &f)
 	if err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
@@ -167,11 +141,11 @@ func (rol *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err = rl.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	return nil
@@ -179,7 +153,7 @@ func (rol *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // DeleteHandler for delete requests.
 type DeleteHandler struct {
-	Deleter
+	Service
 }
 
 // Handle implements Handler interface.
@@ -191,32 +165,47 @@ func (rol *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	if err := rol.Deleter.Delete(r.Context(), id); err != nil {
+	if err := rol.Delete(r.Context(), id); err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "delete role")
 	}
 
 	return nil
 }
 
-// ListHanlder for list requests.
+// ListHandler for list requests.
 type ListHandler struct {
-	Lister
+	Service
 }
 
 // Handle implements Handler interface.
 func (rol *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
-	roles, err := rol.Lister.List(r.Context())
+	roles, err := rol.List(r.Context())
 	if err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "list of roles")
 	}
 
 	data, err := roles.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 	return nil
+}
+
+// Prepare prepares routes to use.
+func Prepare(subrouter *mux.Router, service Service, middleware func(handler.Handler) http.Handler) {
+	create := CreateHandler{service}
+	find := FindHandler{service}
+	update := UpdateHandler{service}
+	delete := DeleteHandler{service}
+	list := ListHandler{service}
+
+	subrouter.Handle("", middleware(&create)).Methods(http.MethodPost)
+	subrouter.Handle("/{id}", middleware(&find)).Methods(http.MethodGet)
+	subrouter.Handle("/{id}", middleware(&update)).Methods(http.MethodPut)
+	subrouter.Handle("/{id}", middleware(&delete)).Methods(http.MethodDelete)
+	subrouter.Handle("", middleware(&list)).Methods(http.MethodGet)
 }
