@@ -12,6 +12,8 @@ import (
 	articleHandlers "github.com/dipress/crmifc/internal/broker/http/article"
 	categoryHandlers "github.com/dipress/crmifc/internal/broker/http/category"
 	"github.com/dipress/crmifc/internal/broker/http/handler"
+	"github.com/dipress/crmifc/internal/role"
+	roleHandlers "github.com/dipress/crmifc/internal/broker/http/role"
 	"github.com/dipress/crmifc/internal/broker/http/user"
 	"github.com/dipress/crmifc/internal/category"
 	authEng "github.com/dipress/crmifc/internal/kit/auth"
@@ -26,6 +28,7 @@ type Services struct {
 	Auth     *auth.Service
 	Article  *article.Service
 	Category *category.Service
+	Role     *role.Service
 }
 
 // NewServer prepare http server to work.
@@ -45,6 +48,9 @@ func NewServer(addr string, services *Services, authenticator *authEng.Authentic
 
 	categories := mux.PathPrefix("/categories").Subrouter()
 	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(authenticator))
+
+	roles := mux.PathPrefix("/roles").Subrouter()
+	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(authenticator))
 
 	s := http.Server{
 		Addr:         addr,

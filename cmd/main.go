@@ -15,6 +15,7 @@ import (
 	httpBroker "github.com/dipress/crmifc/internal/broker/http"
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/storage/postgres/schema"
 	"github.com/dipress/crmifc/internal/validation"
@@ -92,16 +93,19 @@ func setupServices(db *sql.DB, authenticator *auth.Authenticator) *httpBroker.Se
 	userRepo := postgres.NewUserRepository(db)
 	articleRepo := postgres.NewArticleRepository(db)
 	categoryRepo := postgres.NewCategoryRepository(db)
+	roleRepo := postgres.NewRoleRepository(db)
 
 	// Services
 	authenticateService := authSrv.NewService(userRepo, authenticator, time.Hour*24)
 	articleService := article.NewService(articleRepo, &validation.Article{})
 	categoryService := category.NewService(categoryRepo, &validation.Category{})
+	roleService := role.NewService(roleRepo, &validation.Role{})
 
 	services := httpBroker.Services{
 		Auth:     authenticateService,
 		Article:  articleService,
 		Category: categoryService,
+		Role:     roleService,
 	}
 
 	return &services

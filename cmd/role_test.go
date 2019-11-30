@@ -1,290 +1,387 @@
 package main
 
-// func TestRoleCreate(t *testing.T) {
-// 	t.Log("with prepared server")
-// 	{
-// 		db, teardown := postgresDB(t)
-// 		defer teardown()
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+	"testing"
+	"time"
 
-// 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
-// 		defer cancel()
+	"github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/role"
+	"github.com/dipress/crmifc/internal/storage/postgres"
+	"github.com/dipress/crmifc/internal/user"
+)
 
-// 		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+func TestRoleCreate(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
 
-// 		token, err := authenticator.GenerateToken(ctx, claims)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
 
-// 		token = "Bearer " + token
+		userRepo := postgres.NewUserRepository(db)
 
-// 		lis, err := net.Listen("tcp", "127.0.0.1:0")
-// 		if err != nil {
-// 			log.Fatalf("failed to listen: %v", err)
-// 		}
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress",
+			Email:        "dipress@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
 
-// 		s := setupServer(lis.Addr().String(), db, authenticator)
-// 		go s.Serve(lis)
-// 		defer s.Close()
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		t.Log("\ttest:0\tshould create a role.")
-// 		{
-// 			roleStr := `{"name": "admin"}`
-// 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/roles", s.Addr), strings.NewReader(roleStr))
-// 			req.Header.Set("Content-Type", "application/json")
-// 			req.Header.Add("Authorization", token)
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+		authenticator := authenticatorSetup(db)
 
-// 			if err != nil {
-// 				t.Fatalf("unexpected error: %v", err)
-// 			}
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 			resp, err := http.DefaultClient.Do(req)
-// 			if err != nil {
-// 				t.Errorf("unexpected error: %v", err)
-// 			}
+		token = "Bearer " + token
 
-// 			if resp.StatusCode != http.StatusOK {
-// 				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
-// 			}
-// 		}
-// 	}
-// }
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
 
-// func TestFindRole(t *testing.T) {
-// 	t.Log("with prepared server")
-// 	{
-// 		db, teardown := postgresDB(t)
-// 		defer teardown()
+		services := setupServices(db, authenticator)
 
-// 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
-// 		defer cancel()
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
 
-// 		repo := postgres.NewRepository(db)
+		t.Log("\ttest:0\tshould create a role.")
+		{
+			roleStr := `{"name": "admin"}`
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/roles", s.Addr), strings.NewReader(roleStr))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
-// 		nr := role.NewRole{
-// 			Name: "Ingeneer",
-// 		}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-// 		var r role.Role
-// 		if err := repo.CreateRole(ctx, &nr, &r); err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 
-// 		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}
 
-// 		token, err := authenticator.GenerateToken(ctx, claims)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+func TestFindRole(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
 
-// 		token = "Bearer " + token
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
 
-// 		lis, err := net.Listen("tcp", "127.0.0.1:0")
-// 		if err != nil {
-// 			log.Fatalf("failed to listen: %v", err)
-// 		}
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
 
-// 		s := setupServer(lis.Addr().String(), db, authenticator)
-// 		go s.Serve(lis)
-// 		defer s.Close()
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress55",
+			Email:        "dipress55@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
 
-// 		t.Log("\ttest:0\tshould find a role.")
-// 		{
-// 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), nil)
-// 			req.Header.Set("Content-Type", "application/json")
-// 			req.Header.Add("Authorization", token)
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 			if err != nil {
-// 				t.Fatalf("unexpected error: %v", err)
-// 			}
-// 			resp, err := http.DefaultClient.Do(req)
-// 			if err != nil {
-// 				t.Errorf("unexpected error: %v", err)
-// 			}
+		nr := role.NewRole{
+			Name: "Ingeneer",
+		}
 
-// 			if resp.StatusCode != http.StatusOK {
-// 				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
-// 			}
-// 		}
-// 	}
-// }
+		var r role.Role
+		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// func TestUpdateRole(t *testing.T) {
-// 	t.Log("with prepared server")
-// 	{
-// 		db, teardown := postgresDB(t)
-// 		defer teardown()
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+		authenticator := authenticatorSetup(db)
 
-// 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
-// 		defer cancel()
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		repo := postgres.NewRepository(db)
+		token = "Bearer " + token
 
-// 		nr := role.NewRole{
-// 			Name: "Admin",
-// 		}
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
 
-// 		var r role.Role
-// 		err := repo.CreateRole(ctx, &nr, &r)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		services := setupServices(db, authenticator)
 
-// 		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
 
-// 		token, err := authenticator.GenerateToken(ctx, claims)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		t.Log("\ttest:0\tshould find a role.")
+		{
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
-// 		token = "Bearer " + token
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 
-// 		lis, err := net.Listen("tcp", "127.0.0.1:0")
-// 		if err != nil {
-// 			log.Fatalf("failed to listen: %v", err)
-// 		}
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}
 
-// 		s := setupServer(lis.Addr().String(), db, authenticator)
-// 		go s.Serve(lis)
-// 		defer s.Close()
+func TestUpdateRole(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
 
-// 		t.Log("\ttest:0\tshould update a role.")
-// 		{
-// 			roleStr := `{"name": "manager"}`
-// 			req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), strings.NewReader(roleStr))
-// 			req.Header.Set("Content-Type", "application/json")
-// 			req.Header.Add("Authorization", token)
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
 
-// 			if err != nil {
-// 				t.Fatalf("unexpected error: %v", err)
-// 			}
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
 
-// 			resp, err := http.DefaultClient.Do(req)
-// 			if err != nil {
-// 				t.Errorf("unexpected error: %v", err)
-// 			}
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress59",
+			Email:        "dipress59@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
 
-// 			if resp.StatusCode != http.StatusOK {
-// 				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
-// 			}
-// 		}
-// 	}
-// }
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// func TestDeleteRole(t *testing.T) {
-// 	t.Log("with prepared server")
-// 	{
-// 		db, teardown := postgresDB(t)
-// 		defer teardown()
+		nr := role.NewRole{
+			Name: "Admin",
+		}
 
-// 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
-// 		defer cancel()
+		var r role.Role
+		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		repo := postgres.NewRepository(db)
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+		authenticator := authenticatorSetup(db)
 
-// 		nr := role.NewRole{
-// 			Name: "Idol",
-// 		}
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		var rl role.Role
-// 		if err := repo.CreateRole(ctx, &nr, &rl); err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		token = "Bearer " + token
 
-// 		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
 
-// 		token, err := authenticator.GenerateToken(ctx, claims)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		services := setupServices(db, authenticator)
 
-// 		token = "Bearer " + token
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
 
-// 		lis, err := net.Listen("tcp", "127.0.0.1:0")
-// 		if err != nil {
-// 			log.Fatalf("failed to listen: %v", err)
-// 		}
+		t.Log("\ttest:0\tshould update a role.")
+		{
+			roleStr := `{"name": "manager"}`
+			req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), strings.NewReader(roleStr))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
 
-// 		s := setupServer(lis.Addr().String(), db, authenticator)
-// 		go s.Serve(lis)
-// 		defer s.Close()
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-// 		t.Log("\ttest:0\tshould delete a role.")
-// 		{
-// 			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://%s/roles/%d", s.Addr, rl.ID), nil)
-// 			req.Header.Set("Content-Type", "application/json")
-// 			req.Header.Add("Authorization", token)
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 
-// 			if err != nil {
-// 				t.Fatalf("unexpected error: %v", err)
-// 			}
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}
 
-// 			resp, err := http.DefaultClient.Do(req)
-// 			if err != nil {
-// 				t.Errorf("unexpected error: %v", err)
-// 			}
+func TestDeleteRole(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
 
-// 			if resp.StatusCode != http.StatusOK {
-// 				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
-// 			}
-// 		}
-// 	}
-// }
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
 
-// func TestListRole(t *testing.T) {
-// 	t.Log("with prepared server")
-// 	{
-// 		db, teardown := postgresDB(t)
-// 		defer teardown()
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
 
-// 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
-// 		defer cancel()
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress60",
+			Email:        "dipress60@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
 
-// 		repo := postgres.NewRepository(db)
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		nr := role.NewRole{
-// 			Name: "Member",
-// 		}
+		nr := role.NewRole{
+			Name: "Admin",
+		}
 
-// 		var rl role.Role
-// 		if err := repo.CreateRole(ctx, &nr, &rl); err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		var r role.Role
+		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		claims := auth.NewClaims("admin@example.com", time.Now(), time.Hour)
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+		authenticator := authenticatorSetup(db)
 
-// 		token, err := authenticator.GenerateToken(ctx, claims)
-// 		if err != nil {
-// 			t.Errorf("unexpected error: %v", err)
-// 		}
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-// 		token = "Bearer " + token
+		token = "Bearer " + token
 
-// 		lis, err := net.Listen("tcp", "127.0.0.1:0")
-// 		if err != nil {
-// 			log.Fatalf("failed to listen: %v", err)
-// 		}
-// 		s := setupServer(lis.Addr().String(), db, authenticator)
-// 		go s.Serve(lis)
-// 		defer s.Close()
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
 
-// 		t.Log("\ttest:0\tshould show all roles.")
-// 		{
-// 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles", s.Addr), nil)
-// 			req.Header.Set("Content-Type", "application/json")
-// 			req.Header.Add("Authorization", token)
+		services := setupServices(db, authenticator)
 
-// 			if err != nil {
-// 				t.Fatalf("unexpected error: %v", err)
-// 			}
-// 			resp, err := http.DefaultClient.Do(req)
-// 			if err != nil {
-// 				t.Errorf("unexpected error: %v", err)
-// 			}
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
 
-// 			if resp.StatusCode != http.StatusOK {
-// 				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
-// 			}
-// 		}
-// 	}
-// }
+		t.Log("\ttest:0\tshould delete a role.")
+		{
+			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}
+
+func TestListRole(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
+
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nu := user.NewUser{
+			RoleID:       5,
+			Username:     "Dipress59",
+			Email:        "dipress59@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+		}
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var r role.Role
+		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+		authenticator := authenticatorSetup(db)
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
+
+		t.Log("\ttest:0\tshould show all roles.")
+		{
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles", s.Addr), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}
