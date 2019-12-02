@@ -64,7 +64,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -87,9 +87,9 @@ func (rol *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		switch errors.Cause(err) {
 		case role.ErrNotFound:
-			return errors.Wrap(response.NotFoundResponse(w), "find")
+			return errors.Wrap(response.NotFoundResponse(w), "find role")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "find")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "find role")
 		}
 	}
 
@@ -99,7 +99,7 @@ func (rol *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (rol *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "update")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "update role")
 		}
 	}
 
@@ -145,7 +145,7 @@ func (rol *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -190,7 +190,7 @@ func (rol *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 	return nil
 }

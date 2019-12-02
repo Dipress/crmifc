@@ -88,9 +88,9 @@ func (h *FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		switch errors.Cause(err) {
 		case category.ErrNotFound:
-			return errors.Wrap(response.NotFoundResponse(w), "find")
+			return errors.Wrap(response.NotFoundResponse(w), "find category")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "find")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "find category")
 		}
 	}
 
@@ -136,7 +136,7 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "update")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "update category")
 		}
 	}
 
@@ -151,7 +151,7 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// type DeleteHandler for delete request.
+// DeleteHandler for delete request.
 type DeleteHandler struct {
 	Service
 }
@@ -172,7 +172,7 @@ func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// ListHanlder for list requests.
+// ListHandler for list requests.
 type ListHandler struct {
 	Service
 }
@@ -181,7 +181,7 @@ type ListHandler struct {
 func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	categories, err := h.List(r.Context())
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "list of roles")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "list of categories")
 	}
 
 	data, err := categories.MarshalJSON()
