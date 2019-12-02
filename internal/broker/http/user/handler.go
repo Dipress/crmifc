@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dipress/crmifc/internal/auth"
+	"github.com/dipress/crmifc/internal/broker/http/handler"
 	"github.com/dipress/crmifc/internal/broker/http/response"
 	"github.com/dipress/crmifc/internal/user"
 	"github.com/dipress/crmifc/internal/validation"
@@ -14,84 +14,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+// go:generate mockgen -source=handler.go -package=user -destination=handler.mock.go Service
+
 // Handler allows to handle requests.
 type Handler interface {
 	Handle(w http.ResponseWriter, r *http.Request) error
 }
 
-// Authenticater abstraction for authenticate service.
-type Authenticater interface {
-	Authenticate(ctx context.Context, email, password string, t *auth.Token) error
-}
-
-// Creater abstraction for create service.
-type Creater interface {
+// Service contains all services.
+type Service interface {
 	Create(ctx context.Context, f *user.Form, u *user.User) error
-}
-
-// Finder abstraction for find service.
-type Finder interface {
 	Find(ctx context.Context, id int) (*user.User, error)
-}
-
-// Updater abstraction for update service.
-type Updater interface {
-	Update(ctx context.Context, id int, f *user.Form) error
-}
-
-// Deleter abstraction for delete service.
-type Deleter interface {
+	Update(ctx context.Context, id int, f *user.Form) (*user.User, error)
 	Delete(ctx context.Context, id int) error
-}
-
-// Lister absctraction for list service.
-type Lister interface {
 	List(ctx context.Context) (*user.Users, error)
-}
-
-// AuthHandler for authenticate request.
-type AuthHandler struct {
-	Authenticater
-}
-
-// Handle implements Handler interface.
-func (a AuthHandler) Handle(w http.ResponseWriter, r *http.Request) error {
-	var f auth.Form
-	var t auth.Token
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "read body")
-	}
-
-	if err := f.UnmarshalJSON(data); err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
-	}
-
-	if err := a.Authenticater.Authenticate(r.Context(), f.Email, f.Password, &t); err != nil {
-		switch err := errors.Cause(err); err {
-		case auth.ErrEmailNotFound, auth.ErrWrongPassword:
-			return errors.Wrap(response.UnauthorizedResponse(w), "find user")
-		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "authenticate")
-		}
-	}
-
-	data, err = t.MarshalJSON()
-	if err != nil {
-		return errors.Wrap(err, "marshal json")
-	}
-
-	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
-	}
-
-	return nil
 }
 
 // CreateHandler for  user create requests.
 type CreateHandler struct {
-	Creater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -108,22 +49,22 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var u user.User
-	if err := h.Creater.Create(r.Context(), &f, &u); err != nil {
+	if err := h.Create(r.Context(), &f, &u); err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "registrate")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "create user")
 		}
 	}
 
 	data, err = u.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -131,7 +72,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // FindHandler for  user create requests.
 type FindHandler struct {
-	Finder
+	Service
 }
 
 // Handle implements Handler interface.
@@ -142,23 +83,23 @@ func (h FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	u, err := h.Finder.Find(r.Context(), id)
+	u, err := h.Find(r.Context(), id)
 	if err != nil {
 		switch errors.Cause(err) {
 		case user.ErrNotFound:
-			return errors.Wrap(response.NotFoundResponse(w), "find")
+			return errors.Wrap(response.NotFoundResponse(w), "find user")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "find")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "find user")
 		}
 	}
 
 	data, err := u.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -166,7 +107,7 @@ func (h FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // UpdateHandler for  user update requests.
 type UpdateHandler struct {
-	Updater
+	Service
 }
 
 // Handle implements Handler interface.
@@ -187,13 +128,23 @@ func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
 	}
 
-	if err := h.Updater.Update(r.Context(), id, &f); err != nil {
+	u, err := h.Update(r.Context(), id, &f)
+	if err != nil {
 		switch v := errors.Cause(err).(type) {
 		case validation.Errors:
 			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "registrate")
+			return errors.Wrap(response.InternalServerErrorResponse(w), "update user")
 		}
+	}
+
+	data, err = u.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
@@ -201,7 +152,7 @@ func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // DeleteHandler for user delete requests.
 type DeleteHandler struct {
-	Deleter
+	Service
 }
 
 // Handle implements Handler interface.
@@ -213,8 +164,8 @@ func (u *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
 	}
 
-	if err := u.Deleter.Delete(r.Context(), id); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "delete role")
+	if err := u.Delete(r.Context(), id); err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "delete user")
 	}
 
 	return nil
@@ -222,24 +173,39 @@ func (u *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 // ListHandler for user list request.
 type ListHandler struct {
-	Lister
+	Service
 }
 
 // Handle implements Handler interface.
 func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
-	users, err := h.Lister.List(r.Context())
+	users, err := h.List(r.Context())
 	if err != nil {
 		return errors.Wrap(response.InternalServerErrorResponse(w), "list of users")
 	}
 
 	data, err := users.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
 	}
 
 	return nil
+}
+
+// Prepare prepares routes to use.
+func Prepare(subrouter *mux.Router, service Service, middleware func(handler.Handler) http.Handler) {
+	create := CreateHandler{service}
+	find := FindHandler{service}
+	update := UpdateHandler{service}
+	delete := DeleteHandler{service}
+	list := ListHandler{service}
+
+	subrouter.Handle("", middleware(&create)).Methods(http.MethodPost)
+	subrouter.Handle("/{id}", middleware(&find)).Methods(http.MethodGet)
+	subrouter.Handle("/{id}", middleware(&update)).Methods(http.MethodPut)
+	subrouter.Handle("/{id}", middleware(&delete)).Methods(http.MethodDelete)
+	subrouter.Handle("", middleware(&list)).Methods(http.MethodGet)
 }

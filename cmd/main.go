@@ -18,6 +18,7 @@ import (
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/storage/postgres/schema"
+	"github.com/dipress/crmifc/internal/user"
 	"github.com/dipress/crmifc/internal/validation"
 	"github.com/mattes/migrate"
 	"github.com/pkg/errors"
@@ -100,12 +101,14 @@ func setupServices(db *sql.DB, authenticator *auth.Authenticator) *httpBroker.Se
 	articleService := article.NewService(articleRepo, &validation.Article{})
 	categoryService := category.NewService(categoryRepo, &validation.Category{})
 	roleService := role.NewService(roleRepo, &validation.Role{})
+	userService := user.NewService(userRepo, &validation.User{})
 
 	services := httpBroker.Services{
 		Auth:     authenticateService,
 		Article:  articleService,
 		Category: categoryService,
 		Role:     roleService,
+		User:     userService,
 	}
 
 	return &services
