@@ -43,20 +43,24 @@ func NewServer(addr string, services *Services, authenticator *authEng.Authentic
 		Authenticater: services.Auth,
 	}
 
+	base := handler.NewChain(contentTypeMiddleware)
+
 	// Auth route.
-	mux.Handle("/signin", toHTTP(&authenticateHandler)).Methods(http.MethodPost)
+	mux.Handle("/signin", finalizeMiddleware(base)(&authenticateHandler)).Methods(http.MethodPost)
+
+	authorized := base.Append(authMiddleware(authenticator))
 
 	articles := mux.PathPrefix("/articles").Subrouter()
-	articleHandlers.Prepare(articles, services.Article, finalizeMiddleware(authenticator))
+	articleHandlers.Prepare(articles, services.Article, finalizeMiddleware(authorized))
 
 	categories := mux.PathPrefix("/categories").Subrouter()
-	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(authenticator))
+	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(authorized))
 
 	roles := mux.PathPrefix("/roles").Subrouter()
-	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(authenticator))
+	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(authorized))
 
 	users := mux.PathPrefix("/users").Subrouter()
-	userHandlers.Prepare(users, services.User, finalizeMiddleware(authenticator))
+	userHandlers.Prepare(users, services.User, finalizeMiddleware(authorized))
 
 	s := http.Server{
 		Addr:         addr,
@@ -68,22 +72,16 @@ func NewServer(addr string, services *Services, authenticator *authEng.Authentic
 	return &s
 }
 
-// toHTTP allows to implement ServeHTTP for Handler.
-func toHTTP(base handler.Handler) http.Handler {
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := base.Handle(w, r); err != nil {
-			log.Printf("serve http: %+v\n", err)
-		}
-	})
+func finalizeMiddleware(middleware handler.Chain) func(handler.Handler) http.Handler {
+	f := func(handler handler.Handler) http.Handler {
+		wrapped := middleware.Then(handler)
+		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := wrapped.Handle(w, r); err != nil {
+				log.Printf("serve http: %+v\n", err)
+			}
+		})
 
-	return h
-}
-
-func finalizeMiddleware(authenticator *authEng.Authenticator) func(handler.Handler) http.Handler {
-	f := func(h handler.Handler) http.Handler {
-		f := AuthMiddleware(toHTTP(h), authenticator)
-
-		return f
+		return h
 	}
 
 	return f

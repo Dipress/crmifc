@@ -6,17 +6,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
+	"github.com/dipress/crmifc/internal/broker/http/handler"
 	"github.com/dipress/crmifc/internal/kit/auth"
 )
 
-func TestAuthMiddleware(t *testing.T) {
+func Test_authMiddleware(t *testing.T) {
 	tests := []struct {
 		name      string
 		header    map[string]string
 		parseFunc func(ctx context.Context, tknStr string) (auth.Claims, error)
-		callNext  bool
 		code      int
 	}{
 		{
@@ -27,8 +26,7 @@ func TestAuthMiddleware(t *testing.T) {
 			parseFunc: func(ctx context.Context, tknStr string) (auth.Claims, error) {
 				return auth.Claims{}, nil
 			},
-			callNext: true,
-			code:     http.StatusOK,
+			code: http.StatusOK,
 		},
 		{
 			name:   "missing",
@@ -36,8 +34,7 @@ func TestAuthMiddleware(t *testing.T) {
 			parseFunc: func(ctx context.Context, tknStr string) (auth.Claims, error) {
 				return auth.Claims{}, nil
 			},
-			callNext: false,
-			code:     http.StatusUnauthorized,
+			code: http.StatusUnauthorized,
 		},
 		{
 			name: "wrong format",
@@ -47,8 +44,7 @@ func TestAuthMiddleware(t *testing.T) {
 			parseFunc: func(ctx context.Context, tknStr string) (auth.Claims, error) {
 				return auth.Claims{}, nil
 			},
-			callNext: false,
-			code:     http.StatusUnauthorized,
+			code: http.StatusUnauthorized,
 		},
 		{
 			name: "wrong token",
@@ -58,8 +54,7 @@ func TestAuthMiddleware(t *testing.T) {
 			parseFunc: func(ctx context.Context, tknStr string) (auth.Claims, error) {
 				return auth.Claims{}, errors.New("mock error")
 			},
-			callNext: false,
-			code:     http.StatusUnauthorized,
+			code: http.StatusUnauthorized,
 		},
 	}
 
@@ -67,28 +62,19 @@ func TestAuthMiddleware(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			nextCalls := make(chan struct{})
-			b := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				go func() {
-					nextCalls <- struct{}{}
-				}()
+
+			next := handler.Func(func(w http.ResponseWriter, r *http.Request) error {
+				return nil
 			})
+
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "http://exapmle.com", nil)
+			r := httptest.NewRequest(http.MethodGet, "http://exapmle.com", nil)
+
 			for k, v := range tc.header {
 				r.Header.Set(k, v)
 			}
-			h := AuthMiddleware(b, parseFunc(tc.parseFunc))
-			h.ServeHTTP(w, r)
 
-			if tc.callNext {
-				select {
-				case <-nextCalls:
-				case <-time.After(time.Second):
-					t.Error("should write to next channel")
-				}
-				return
-			}
+			authMiddleware(parseFunc(tc.parseFunc))(next).Handle(w, r)
 
 			if w.Code != tc.code {
 				t.Errorf("unexpected code: %d expected: %d", w.Code, tc.code)
@@ -101,4 +87,21 @@ type parseFunc func(ctx context.Context, tknStr string) (auth.Claims, error)
 
 func (p parseFunc) ParseClaims(ctx context.Context, tknStr string) (auth.Claims, error) {
 	return p(ctx, tknStr)
+}
+
+func Test_contentTypeMiddleware(t *testing.T) {
+	t.Parallel()
+
+	req := httptest.NewRequest(http.MethodGet, "http://exapmle.com", nil)
+	rec := httptest.NewRecorder()
+
+	next := handler.Func(func(w http.ResponseWriter, r *http.Request) error {
+		return nil
+	})
+
+	contentTypeMiddleware(next).Handle(rec, req)
+	ct := rec.Header().Get("Content-Type")
+	if ct != "application/json" {
+		t.Errorf("expected to set application/json Content-Type header: %s", ct)
+	}
 }
