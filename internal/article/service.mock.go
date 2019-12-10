@@ -90,6 +90,20 @@ func (mr *MockRepositoryMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, id)
 }
 
+// List mocks base method
+func (m *MockRepository) List(ctx context.Context, articles *Articles) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, articles)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// List indicates an expected call of List
+func (mr *MockRepositoryMockRecorder) List(ctx, articles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockRepository)(nil).List), ctx, articles)
+}
+
 // MockValidater is a mock of Validater interface
 type MockValidater struct {
 	ctrl     *gomock.Controller

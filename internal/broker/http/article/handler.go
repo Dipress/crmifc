@@ -28,6 +28,7 @@ type Service interface {
 	Find(ctx context.Context, id int) (*article.Article, error)
 	Update(ctx context.Context, id int, f *article.Form) (*article.Article, error)
 	Delete(ctx context.Context, id int) error
+	List(ctx context.Context) (*article.Articles, error)
 }
 
 // CreateHandler for create requests.
@@ -172,15 +173,41 @@ func (h DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// ListHandler for article list request.
+type ListHandler struct {
+	Service
+}
+
+// Handle implements Handler interface.
+func (h ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
+	articles, err := h.List(r.Context())
+	if err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "list of articles")
+	}
+
+	data, err := articles.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+	}
+
+	if _, err := w.Write(data); err != nil {
+		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+	}
+
+	return nil
+}
+
 // Prepare prepares routes to use.
 func Prepare(subrouter *mux.Router, service Service, middleware func(handler.Handler) http.Handler) {
 	create := CreateHandler{service}
 	find := FindHandler{service}
 	update := UpdateHandler{service}
 	delete := DeleteHandler{service}
+	list := ListHandler{service}
 
 	subrouter.Handle("", middleware(&create)).Methods(http.MethodPost)
 	subrouter.Handle("/{id}", middleware(&find)).Methods(http.MethodGet)
 	subrouter.Handle("/{id}", middleware(&update)).Methods(http.MethodPut)
 	subrouter.Handle("/{id}", middleware(&delete)).Methods(http.MethodDelete)
+	subrouter.Handle("", middleware(&list)).Methods(http.MethodGet)
 }

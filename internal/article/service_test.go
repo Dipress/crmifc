@@ -277,3 +277,51 @@ func Test_Service_Delete(t *testing.T) {
 		})
 	}
 }
+
+func Test_List_Service(t *testing.T) {
+	tests := []struct {
+		name           string
+		repositoryFunc func(mock *MockRepository)
+		wantErr        bool
+	}{
+		{
+			name: "ok",
+			repositoryFunc: func(m *MockRepository) {
+				m.EXPECT().List(gomock.Any(), gomock.Any()).Return(nil)
+			},
+		},
+		{
+			name: "internal error",
+			repositoryFunc: func(m *MockRepository) {
+				m.EXPECT().List(gomock.Any(), gomock.Any()).Return(errors.New("mock error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			repo := NewMockRepository(ctrl)
+
+			tc.repositoryFunc(repo)
+
+			s := NewService(repo, nil)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			_, err := s.List(ctx)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.Nil(t, err)
+		})
+	}
+}

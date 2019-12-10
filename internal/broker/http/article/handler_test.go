@@ -1,7 +1,6 @@
 package article
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -209,8 +208,46 @@ func TestDeleteHandler(t *testing.T) {
 	}
 }
 
-type deleteFunc func(ctx context.Context, id int) error
+func TestListHandler(t *testing.T) {
+	tests := []struct {
+		name        string
+		serviceFunc func(mock *MockService)
+		code        int
+	}{
+		{
+			name: "ok",
+			serviceFunc: func(m *MockService) {
+				m.EXPECT().List(gomock.Any()).Return(&article.Articles{}, nil)
+			},
+			code: http.StatusOK,
+		},
+		{
+			name: "repository error",
+			serviceFunc: func(m *MockService) {
+				m.EXPECT().List(gomock.Any()).Return(&article.Articles{}, errors.New("mock error"))
+			},
+			code: http.StatusInternalServerError,
+		},
+	}
 
-func (d deleteFunc) Delete(ctx context.Context, id int) error {
-	return d(ctx, id)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := NewMockService(ctrl)
+			tc.serviceFunc(service)
+
+			h := ListHandler{service}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "http://example.com", strings.NewReader("{}"))
+
+			err := h.Handle(w, r)
+			if w.Code != tc.code {
+				t.Errorf("unexpected code: %d expected %d error: %v", w.Code, tc.code, err)
+			}
+		})
+	}
 }
