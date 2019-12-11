@@ -15,6 +15,7 @@ type Repository interface {
 	Find(ctx context.Context, id int) (*Article, error)
 	Update(ctx context.Context, id int, a *Article) error
 	Delete(ctx context.Context, id int) error
+	List(ctx context.Context, articles *Articles) error
 }
 
 // Validater validates article fields.
@@ -106,4 +107,14 @@ func (s *Service) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+// List shows all articles.
+func (s *Service) List(ctx context.Context) (*Articles, error) {
+	var articles Articles
+	if err := s.Repository.List(ctx, &articles); err != nil {
+		return nil, errors.Wrap(err, "list of articles")
+	}
+
+	return &articles, nil
 }

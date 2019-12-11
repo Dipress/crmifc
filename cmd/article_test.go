@@ -372,3 +372,95 @@ func TestDeleteArticle(t *testing.T) {
 		}
 	}
 }
+
+func TestArticleList(t *testing.T) {
+	t.Log("with prepared server")
+	{
+		db, teardown := postgresDB(t)
+		defer teardown()
+
+		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
+		defer cancel()
+
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+		articleRepo := postgres.NewArticleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rol role.Role
+		err := roleRepo.Create(ctx, &nr, &rol)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		nu := user.NewUser{
+			Username:     "username29",
+			Email:        "username29@example.com",
+			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
+			RoleID:       rol.ID,
+		}
+
+		var u user.User
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		claims := auth.NewClaims(u.Email, time.Now(), time.Hour)
+
+		authenticator := authenticatorSetup(db)
+
+		na := article.NewArticle{
+			UserID:     u.ID,
+			CategoryID: 10,
+			Title:      "my title",
+			Body:       "my body",
+		}
+
+		var art article.Article
+		err = articleRepo.Create(ctx, &na, &art)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token, err := authenticator.GenerateToken(ctx, claims)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		token = "Bearer " + token
+
+		lis, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		services := setupServices(db, authenticator)
+
+		s := setupServer(lis.Addr().String(), services, authenticator)
+		go s.Serve(lis)
+		defer s.Close()
+
+		t.Log("\ttest:0\tshould show articles.")
+		{
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/articles/", s.Addr), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", token)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code: %d expected: %d", resp.StatusCode, http.StatusOK)
+			}
+		}
+	}
+}

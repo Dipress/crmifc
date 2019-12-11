@@ -117,3 +117,33 @@ func (r *ArticleRepository) Delete(ctx context.Context, id int) error {
 
 	return nil
 }
+
+const listArticleQuery = `SELECT * FROM articles`
+
+// List shows all articles.
+func (r *ArticleRepository) List(ctx context.Context, articles *article.Articles) error {
+	rows, err := r.db.QueryxContext(ctx, listArticleQuery)
+	if err != nil {
+		return errors.Wrap(err, "query rows")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var a article.Article
+		if err := rows.Scan(
+			&a.ID,
+			&a.UserID,
+			&a.Title,
+			&a.Body,
+			&a.CategoryID,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+		); err != nil {
+			return errors.Wrap(err, "articles query row scan on loop")
+		}
+
+		articles.Articles = append(articles.Articles, a)
+	}
+
+	return nil
+}

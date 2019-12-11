@@ -146,3 +146,53 @@ func TestArticleDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestListArticles(t *testing.T) {
+	t.Log("with initialized repository")
+	{
+		repo := NewArticleRepository(db)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		na1 := article.NewArticle{
+			UserID:     6,
+			CategoryID: 9,
+			Title:      "my new title1",
+			Body:       "my new body1",
+		}
+
+		var art1 article.Article
+		err := repo.Create(ctx, &na1, &art1)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		na2 := article.NewArticle{
+			UserID:     6,
+			CategoryID: 9,
+			Title:      "my new title2",
+			Body:       "my new body2",
+		}
+
+		var art2 article.Article
+		err = repo.Create(ctx, &na2, &art2)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		t.Log("\ttest:0\tshould show list of the articles")
+		{
+			var articles article.Articles
+			err := repo.List(ctx, &articles)
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if len(articles.Articles) != 2 {
+				t.Error("expected to slice of two articles")
+			}
+		}
+	}
+}
