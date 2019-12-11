@@ -18,16 +18,6 @@ type Authenticator interface {
 	ParseClaims(ctx context.Context, tknStr string) (auth.Claims, error)
 }
 
-// contentTypeMiddleware sets content type header.
-func contentTypeMiddleware(next handler.Handler) handler.Handler {
-	h := handler.Func(func(w http.ResponseWriter, r *http.Request) error {
-		w.Header().Set("Content-Type", "application/json")
-		return next.Handle(w, r)
-	})
-
-	return h
-}
-
 // authMiddleware represents middleware with authentication.
 func authMiddleware(a Authenticator) handler.Middleware {
 	m := func(next handler.Handler) handler.Handler {
@@ -51,13 +41,23 @@ func authMiddleware(a Authenticator) handler.Middleware {
 			ctx := auth.ToContext(c, &cl)
 			r = r.WithContext(ctx)
 
-			return nil
+			return next.Handle(w, r)
 		})
 
 		return h
 	}
 
 	return m
+}
+
+// contentTypeMiddleware sets content type header.
+func contentTypeMiddleware(next handler.Handler) handler.Handler {
+	h := handler.Func(func(w http.ResponseWriter, r *http.Request) error {
+		w.Header().Set("Content-Type", "application/json")
+		return next.Handle(w, r)
+	})
+
+	return h
 }
 
 // parseAuthHeader parses an authorization header. Expected header is of
