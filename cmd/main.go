@@ -32,7 +32,7 @@ func main() {
 	var (
 		addr           = flag.String("addr", ":8080", "address of http server")
 		dsn            = flag.String("dsn", "", "postgres database DSN")
-		privateKeyFile = flag.String("key", "./internal/kit/keys/jwtRS256.key", "private key file path")
+		privateKeyFile = flag.String("key", "", "private key file path")
 		keyID          = flag.String("id", "123456", "private key id")
 	)
 	flag.Parse()

@@ -12,6 +12,7 @@ import (
 
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/user"
 )
@@ -26,9 +27,19 @@ func TestCategoryCreate(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress",
 			Email:        "dipress@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -99,9 +110,19 @@ func TestFindCategory(t *testing.T) {
 
 		categoryRepo := postgres.NewCategoryRepository(db)
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress2",
 			Email:        "dipress2@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -174,9 +195,19 @@ func TestUpdateCategory(t *testing.T) {
 
 		categoryRepo := postgres.NewCategoryRepository(db)
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress3",
 			Email:        "dipress3@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -254,9 +285,19 @@ func TestDeleteCategory(t *testing.T) {
 
 		categoryRepo := postgres.NewCategoryRepository(db)
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress4",
 			Email:        "dipress4@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -330,9 +371,19 @@ func TestListCategory(t *testing.T) {
 
 		categoryRepo := postgres.NewCategoryRepository(db)
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress3",
 			Email:        "dipress3@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",

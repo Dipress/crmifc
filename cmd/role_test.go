@@ -26,9 +26,19 @@ func TestRoleCreate(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress",
 			Email:        "dipress@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -62,7 +72,7 @@ func TestRoleCreate(t *testing.T) {
 
 		t.Log("\ttest:0\tshould create a role.")
 		{
-			roleStr := `{"name": "admin"}`
+			roleStr := `{"name": "Member"}`
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/roles", s.Addr), strings.NewReader(roleStr))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Add("Authorization", token)
@@ -95,8 +105,17 @@ func TestFindRole(t *testing.T) {
 		userRepo := postgres.NewUserRepository(db)
 		roleRepo := postgres.NewRoleRepository(db)
 
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress55",
 			Email:        "dipress55@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -104,15 +123,6 @@ func TestFindRole(t *testing.T) {
 
 		var u user.User
 		if err := userRepo.Create(ctx, &nu, &u); err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		nr := role.NewRole{
-			Name: "Ingeneer",
-		}
-
-		var r role.Role
-		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -139,7 +149,7 @@ func TestFindRole(t *testing.T) {
 
 		t.Log("\ttest:0\tshould find a role.")
 		{
-			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), nil)
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/roles/%d", s.Addr, rl.ID), nil)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Add("Authorization", token)
 
@@ -170,8 +180,17 @@ func TestUpdateRole(t *testing.T) {
 		userRepo := postgres.NewUserRepository(db)
 		roleRepo := postgres.NewRoleRepository(db)
 
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress59",
 			Email:        "dipress59@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -179,15 +198,6 @@ func TestUpdateRole(t *testing.T) {
 
 		var u user.User
 		if err := userRepo.Create(ctx, &nu, &u); err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		nr := role.NewRole{
-			Name: "Admin",
-		}
-
-		var r role.Role
-		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -214,8 +224,8 @@ func TestUpdateRole(t *testing.T) {
 
 		t.Log("\ttest:0\tshould update a role.")
 		{
-			roleStr := `{"name": "manager"}`
-			req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), strings.NewReader(roleStr))
+			roleStr := `{"name": "Manager"}`
+			req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://%s/roles/%d", s.Addr, rl.ID), strings.NewReader(roleStr))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Add("Authorization", token)
 
@@ -247,8 +257,17 @@ func TestDeleteRole(t *testing.T) {
 		userRepo := postgres.NewUserRepository(db)
 		roleRepo := postgres.NewRoleRepository(db)
 
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress60",
 			Email:        "dipress60@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -256,15 +275,6 @@ func TestDeleteRole(t *testing.T) {
 
 		var u user.User
 		if err := userRepo.Create(ctx, &nu, &u); err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		nr := role.NewRole{
-			Name: "Admin",
-		}
-
-		var r role.Role
-		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -291,7 +301,7 @@ func TestDeleteRole(t *testing.T) {
 
 		t.Log("\ttest:0\tshould delete a role.")
 		{
-			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://%s/roles/%d", s.Addr, r.ID), nil)
+			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://%s/roles/%d", s.Addr, rl.ID), nil)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Add("Authorization", token)
 
@@ -323,8 +333,17 @@ func TestListRole(t *testing.T) {
 		userRepo := postgres.NewUserRepository(db)
 		roleRepo := postgres.NewRoleRepository(db)
 
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress59",
 			Email:        "dipress59@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -332,15 +351,6 @@ func TestListRole(t *testing.T) {
 
 		var u user.User
 		if err := userRepo.Create(ctx, &nu, &u); err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		nr := role.NewRole{
-			Name: "Admin",
-		}
-
-		var r role.Role
-		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 

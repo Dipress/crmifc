@@ -289,18 +289,29 @@ func TestFindUserByEmail(t *testing.T) {
 		defer teardown()
 
 		userRepo := NewUserRepository(db)
+		roleRepo := NewRoleRepository(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		nr := role.NewRole{
+			Name: "Member",
+		}
+		var r role.Role
+		err :=roleRepo.Create(ctx, &nr, &r)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
 			Username:     "username4",
 			Email:        "username4@example.com",
 			PasswordHash: "$2y$12$gwoUXq7kCxNcucd.eFxOp.vJYYmo6917fSGuuEowfyNf3E8KySrWC",
+			RoleID: r.ID,
 		}
 
 		var usr user.User
-		err := userRepo.Create(ctx, &nu, &usr)
+		err = userRepo.Create(ctx, &nu, &usr)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}

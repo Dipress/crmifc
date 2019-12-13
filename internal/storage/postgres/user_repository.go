@@ -65,7 +65,17 @@ func (r *UserRepository) Find(ctx context.Context, id int) (*user.User, error) {
 	return &u, nil
 }
 
-const updateUserQuery = `UPDATE users SET username=:username, email=:email, password_hash=:password_hash, role_id=:role_id, updated_at=now() WHERE id=:id`
+const updateUserQuery = `
+	UPDATE 
+		users 
+	SET 
+		username=:username, 
+		email=:email, 
+		password_hash=:password_hash, 
+		role_id=:role_id, 
+		updated_at=now() 
+	WHERE 
+		id=:id`
 
 // Update updates user by id.
 func (r *UserRepository) Update(ctx context.Context, id int, u *user.User) error {
@@ -143,9 +153,21 @@ func (r *UserRepository) UniqueEmail(ctx context.Context, email string) error {
 	return nil
 }
 
-const emailFindQuery = `SELECT 
-	id, username, email, password_hash, created_at, updated_at 
-	FROM users WHERE email = $1`
+const emailFindQuery = `
+	SELECT
+		users.id,
+		users.username,
+		users.email,
+		users.password_hash,
+		roles.id,
+		roles.name,
+		users.created_at,
+		users.updated_at
+	FROM
+		users
+		LEFT JOIN roles ON users.role_id = roles.id
+	WHERE 
+		email = $1`
 
 // FindByEmail finds users by e-mail.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
@@ -156,6 +178,8 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 			&usr.Username,
 			&usr.Email,
 			&usr.PasswordHash,
+			&usr.Role.ID,
+			&usr.Role.Name,
 			&usr.CreatedAt,
 			&usr.UpdatedAt,
 		)
@@ -171,10 +195,18 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 	return &usr, nil
 }
 
-const listUsersQuery = `SELECT 
-	users.id, users.username, users.email, users.created_at, users.updated_at, roles.id, roles.name 
-	FROM users
-	LEFT JOIN roles ON users.role_id = roles.id`
+const listUsersQuery = `
+	SELECT 
+		users.id, 
+		users.username, 
+		users.email, 
+		users.created_at, 
+		users.updated_at, 
+		roles.id, 
+		roles.name 
+	FROM 
+		users
+		LEFT JOIN roles ON users.role_id = roles.id`
 
 // List returns all users.
 func (r *UserRepository) List(ctx context.Context, usr *user.Users) error {
