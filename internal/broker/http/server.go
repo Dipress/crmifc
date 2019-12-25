@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/dipress/crmifc/internal/abillity"
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/auth"
 	articleHandlers "github.com/dipress/crmifc/internal/broker/http/article"
@@ -56,11 +57,13 @@ func NewServer(addr string, services *Services, authenticator *authEng.Authentic
 	categories := mux.PathPrefix("/categories").Subrouter()
 	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(authorized))
 
+	admin := authorized.Append(adminMiddleware(abillity.UserAbillity{}))
+
 	roles := mux.PathPrefix("/roles").Subrouter()
-	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(authorized))
+	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(admin))
 
 	users := mux.PathPrefix("/users").Subrouter()
-	userHandlers.Prepare(users, services.User, finalizeMiddleware(authorized))
+	userHandlers.Prepare(users, services.User, finalizeMiddleware(admin))
 
 	s := http.Server{
 		Addr:         addr,

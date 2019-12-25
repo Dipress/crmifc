@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/storage/postgres"
 	"github.com/dipress/crmifc/internal/user"
 )
@@ -22,16 +23,27 @@ func TestSignIn(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), caseTimeout)
 		defer cancel()
 
-		repo := postgres.NewUserRepository(db)
+		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Manager",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
+			RoleID:       rl.ID,
 			Username:     "username6",
 			Email:        "username6@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
 		}
 
 		var u user.User
-		if err := repo.Create(ctx, &nu, &u); err != nil {
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 

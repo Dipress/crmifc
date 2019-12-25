@@ -36,7 +36,7 @@ func (r *RoleRepository) Create(ctx context.Context, f *role.NewRole, rol *role.
 
 const findRoleQuery = `SELECT id, name, created_at, updated_at FROM roles where id = $1`
 
-// FindRole finds a role by id.
+// Find finds a role by id.
 func (r *RoleRepository) Find(ctx context.Context, id int) (*role.Role, error) {
 	var rol role.Role
 	if err := r.db.QueryRowContext(ctx, findRoleQuery, id).
@@ -51,7 +51,7 @@ func (r *RoleRepository) Find(ctx context.Context, id int) (*role.Role, error) {
 
 const updateRoleQuery = `UPDATE roles SET name=:name, updated_at=now() WHERE id=:id`
 
-// UpdateRole updates role by id.
+// Update updates role by id.
 func (r *RoleRepository) Update(ctx context.Context, id int, rl *role.Role) error {
 
 	stmt, err := r.db.PrepareNamed(updateRoleQuery)

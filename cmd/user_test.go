@@ -26,9 +26,19 @@ func TestUserCreate(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress91",
 			Email:        "dipress91@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
@@ -102,17 +112,26 @@ func TestFindUser(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress92",
 			Email:        "dipress92@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
 		}
 
 		var u user.User
-		err := userRepo.Create(ctx, &nu, &u)
-		if err != nil {
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -169,17 +188,26 @@ func TestUpdateUser(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress93",
 			Email:        "dipress93@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
 		}
 
 		var u user.User
-		err := userRepo.Create(ctx, &nu, &u)
-		if err != nil {
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -242,17 +270,26 @@ func TestDeleteUser(t *testing.T) {
 		defer cancel()
 
 		userRepo := postgres.NewUserRepository(db)
+		roleRepo := postgres.NewRoleRepository(db)
+
+		nr := role.NewRole{
+			Name: "Admin",
+		}
+
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		nu := user.NewUser{
-			RoleID:       5,
+			RoleID:       rl.ID,
 			Username:     "Dipress94",
 			Email:        "dipress94@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
 		}
 
 		var u user.User
-		err := userRepo.Create(ctx, &nu, &u)
-		if err != nil {
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
@@ -315,21 +352,20 @@ func TestListUser(t *testing.T) {
 			Name: "Admin",
 		}
 
-		var r role.Role
-		if err := roleRepo.Create(ctx, &nr, &r); err != nil {
+		var rl role.Role
+		if err := roleRepo.Create(ctx, &nr, &rl); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 
 		nu := user.NewUser{
-			RoleID:       r.ID,
+			RoleID:       rl.ID,
 			Username:     "Dipress93",
 			Email:        "dipress93@example.com",
 			PasswordHash: "$2y$12$e4.VBLqKAanAZs10dRL65O8.b0kHBC34pcGCN1HdJIchCi9im40Ei",
 		}
 
 		var u user.User
-		err := userRepo.Create(ctx, &nu, &u)
-		if err != nil {
+		if err := userRepo.Create(ctx, &nu, &u); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 

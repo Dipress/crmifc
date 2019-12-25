@@ -173,6 +173,7 @@ func (a *Authenticator) ParseClaims(ctx context.Context, tknStr string) (Claims,
 
 	claims.User.ID = user.ID
 	claims.User.Role.ID = user.Role.ID
+	claims.User.Role.Name = user.Role.Name
 	claims.User.Username = user.Username
 
 	return claims, nil

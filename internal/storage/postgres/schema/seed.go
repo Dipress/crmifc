@@ -23,9 +23,15 @@ func Seed(db *sql.DB) error {
 const seeds = `
 	-- Create role with name "Admin"
 	INSERT INTO roles (name) VALUES('Admin') ON CONFLICT DO NOTHING;
+	INSERT INTO roles (name) VALUES('Manager') ON CONFLICT DO NOTHING;
 
 	-- Create admin with password "password123"
 	INSERT INTO users (role_id, username, email, password_hash) VALUES 
 	(1, 'Admin', 'admin@example.com', '$2a$10$lGMGO59qq7yKx.zwtI4cZul5lM7YVS1v07.4hlSAPrbngUDfddQBK') 
+	ON CONFLICT DO NOTHING;
+
+	-- Create manager with password "password123"
+	INSERT INTO users (role_id, username, email, password_hash) VALUES 
+	(2, 'Manager', 'manager@example.com', '$2a$10$lGMGO59qq7yKx.zwtI4cZul5lM7YVS1v07.4hlSAPrbngUDfddQBK') 
 	ON CONFLICT DO NOTHING;
 `

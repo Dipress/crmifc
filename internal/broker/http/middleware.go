@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dipress/crmifc/internal/broker/http/response"
-
 	"github.com/dipress/crmifc/internal/broker/http/handler"
+	"github.com/dipress/crmifc/internal/broker/http/response"
 	"github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/user"
 )
 
 // Authenticator is used to authenticate clients.
@@ -58,6 +58,30 @@ func contentTypeMiddleware(next handler.Handler) handler.Handler {
 	})
 
 	return h
+}
+
+// Abillity checks permissions to view.
+type Abillity interface {
+	CanAdmin(u *user.User) bool
+}
+
+func adminMiddleware(a Abillity) handler.Middleware {
+	m := func(next handler.Handler) handler.Handler {
+		h := handler.Func(func(w http.ResponseWriter, r *http.Request) error {
+			ctx := r.Context()
+			claims, _ := auth.FromContext(ctx)
+
+			ok := a.CanAdmin(&claims.User)
+			if !ok {
+				return response.UnauthorizedResponse(w)
+			}
+			return next.Handle(w, r)
+		})
+
+		return h
+	}
+
+	return m
 }
 
 // parseAuthHeader parses an authorization header. Expected header is of
