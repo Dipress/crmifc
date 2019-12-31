@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	userHandlers "github.com/dipress/crmifc/internal/broker/http/user"
 	"github.com/dipress/crmifc/internal/category"
 	authEng "github.com/dipress/crmifc/internal/kit/auth"
+	"github.com/dipress/crmifc/internal/kit/logger"
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/user"
 )
@@ -36,7 +36,7 @@ type Services struct {
 }
 
 // NewServer prepare http server to work.
-func NewServer(addr string, services *Services, authenticator *authEng.Authenticator) *http.Server {
+func NewServer(addr string, logger *logger.Logger, services *Services, authenticator *authEng.Authenticator) *http.Server {
 	mux := mux.NewRouter().StrictSlash(true)
 
 	// Auth handler.
@@ -47,45 +47,35 @@ func NewServer(addr string, services *Services, authenticator *authEng.Authentic
 	base := handler.NewChain(contentTypeMiddleware)
 
 	// Auth route.
-	mux.Handle("/signin", finalizeMiddleware(base)(&authenticateHandler)).Methods(http.MethodPost)
+	mux.Handle("/signin", finalizeMiddleware(logger, base)(&authenticateHandler)).Methods(http.MethodPost)
 
 	authorized := base.Append(authMiddleware(authenticator))
 
 	articles := mux.PathPrefix("/articles").Subrouter()
-	articleHandlers.Prepare(articles, services.Article, finalizeMiddleware(authorized))
+	articleHandlers.Prepare(articles, services.Article, finalizeMiddleware(logger, authorized))
 
 	categories := mux.PathPrefix("/categories").Subrouter()
-	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(authorized))
+	categoryHandlers.Prepare(categories, services.Category, finalizeMiddleware(logger, authorized))
 
 	admin := authorized.Append(adminMiddleware(abillity.UserAbillity{}))
 
 	roles := mux.PathPrefix("/roles").Subrouter()
-	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(admin))
+	roleHandlers.Prepare(roles, services.Role, finalizeMiddleware(logger, admin))
 
 	users := mux.PathPrefix("/users").Subrouter()
-	userHandlers.Prepare(users, services.User, finalizeMiddleware(admin))
+	userHandlers.Prepare(users, services.User, finalizeMiddleware(logger, admin))
+
+	// TODO: Delete after deploy to real server.
+	// allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
+	// allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE"})
+	// allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 
 	s := http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      mux, //handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(mux),
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
 	}
 
 	return &s
-}
-
-func finalizeMiddleware(middleware handler.Chain) func(handler.Handler) http.Handler {
-	f := func(handler handler.Handler) http.Handler {
-		wrapped := middleware.Then(handler)
-		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if err := wrapped.Handle(w, r); err != nil {
-				log.Printf("serve http: %+v\n", err)
-			}
-		})
-
-		return h
-	}
-
-	return f
 }

@@ -2,12 +2,13 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/dipress/crmifc/internal/auth"
 	"github.com/dipress/crmifc/internal/broker/http/response"
-	"github.com/pkg/errors"
 )
 
 // Handler allows to handle requests.
@@ -32,29 +33,29 @@ func (a AuthenticaterHandler) Handle(w http.ResponseWriter, r *http.Request) err
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "read body")
+		return fmt.Errorf("read body: %w", response.BadRequestResponse(w))
 	}
 
 	if err := f.UnmarshalJSON(data); err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
+		return fmt.Errorf("unmarshal json: %w", response.BadRequestResponse(w))
 	}
 
 	if err := a.Authenticater.Authenticate(r.Context(), f.Email, f.Password, &t); err != nil {
-		switch err := errors.Cause(err); err {
-		case auth.ErrEmailNotFound, auth.ErrWrongPassword:
-			return errors.Wrap(response.UnauthorizedResponse(w), "find user")
+		switch {
+		case errors.Is(err, auth.ErrEmailNotFound), errors.Is(err, auth.ErrWrongPassword):
+			return fmt.Errorf("find user: %w", response.UnauthorizedResponse(w))
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "authenticate user")
+			return fmt.Errorf("authenticate user: %w", response.InternalServerErrorResponse(w))
 		}
 	}
 
 	data, err = t.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return fmt.Errorf("marshal json: %w", response.InternalServerErrorResponse(w))
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+		return fmt.Errorf("write response: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil

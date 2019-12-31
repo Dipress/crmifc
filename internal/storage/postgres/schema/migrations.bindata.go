@@ -287,14 +287,14 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"1565894792_users.down.sql": _1565894792_usersDownSql,
-	"1565894792_users.up.sql": _1565894792_usersUpSql,
-	"1569158364_roles.down.sql": _1569158364_rolesDownSql,
-	"1569158364_roles.up.sql": _1569158364_rolesUpSql,
-	"1570866542_articles.down.sql": _1570866542_articlesDownSql,
-	"1570866542_articles.up.sql": _1570866542_articlesUpSql,
+	"1565894792_users.down.sql":      _1565894792_usersDownSql,
+	"1565894792_users.up.sql":        _1565894792_usersUpSql,
+	"1569158364_roles.down.sql":      _1569158364_rolesDownSql,
+	"1569158364_roles.up.sql":        _1569158364_rolesUpSql,
+	"1570866542_articles.down.sql":   _1570866542_articlesDownSql,
+	"1570866542_articles.up.sql":     _1570866542_articlesUpSql,
 	"1571140600_categories.down.sql": _1571140600_categoriesDownSql,
-	"1571140600_categories.up.sql": _1571140600_categoriesUpSql,
+	"1571140600_categories.up.sql":   _1571140600_categoriesUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -336,15 +336,16 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
-	"1565894792_users.down.sql": &bintree{_1565894792_usersDownSql, map[string]*bintree{}},
-	"1565894792_users.up.sql": &bintree{_1565894792_usersUpSql, map[string]*bintree{}},
-	"1569158364_roles.down.sql": &bintree{_1569158364_rolesDownSql, map[string]*bintree{}},
-	"1569158364_roles.up.sql": &bintree{_1569158364_rolesUpSql, map[string]*bintree{}},
-	"1570866542_articles.down.sql": &bintree{_1570866542_articlesDownSql, map[string]*bintree{}},
-	"1570866542_articles.up.sql": &bintree{_1570866542_articlesUpSql, map[string]*bintree{}},
+	"1565894792_users.down.sql":      &bintree{_1565894792_usersDownSql, map[string]*bintree{}},
+	"1565894792_users.up.sql":        &bintree{_1565894792_usersUpSql, map[string]*bintree{}},
+	"1569158364_roles.down.sql":      &bintree{_1569158364_rolesDownSql, map[string]*bintree{}},
+	"1569158364_roles.up.sql":        &bintree{_1569158364_rolesUpSql, map[string]*bintree{}},
+	"1570866542_articles.down.sql":   &bintree{_1570866542_articlesDownSql, map[string]*bintree{}},
+	"1570866542_articles.up.sql":     &bintree{_1570866542_articlesUpSql, map[string]*bintree{}},
 	"1571140600_categories.down.sql": &bintree{_1571140600_categoriesDownSql, map[string]*bintree{}},
-	"1571140600_categories.up.sql": &bintree{_1571140600_categoriesUpSql, map[string]*bintree{}},
+	"1571140600_categories.up.sql":   &bintree{_1571140600_categoriesUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
@@ -393,4 +394,3 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-

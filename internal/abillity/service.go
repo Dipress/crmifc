@@ -1,6 +1,8 @@
 package abillity
 
-import "github.com/dipress/crmifc/internal/user"
+import (
+	"github.com/dipress/crmifc/internal/user"
+)
 
 const (
 	// ADMIN is a role name.

@@ -2,9 +2,9 @@ package article
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dipress/crmifc/internal/kit/auth"
-	"github.com/pkg/errors"
 )
 
 // go:generate mockgen -source=service.go -package=article -destination=service.mock.go
@@ -42,7 +42,7 @@ func NewService(r Repository, v Validater) *Service {
 // Create creates a new article.
 func (s *Service) Create(ctx context.Context, f *Form) (*Article, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater error")
+		return nil, fmt.Errorf("validater error: %w", err)
 	}
 
 	claims, _ := auth.FromContext(ctx)
@@ -56,7 +56,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Article, error) {
 
 	var a Article
 	if err := s.Repository.Create(ctx, &na, &a); err != nil {
-		return nil, errors.Wrap(err, "repository create article")
+		return nil, fmt.Errorf("repository create article: %w", err)
 	}
 	return &a, nil
 }
@@ -65,7 +65,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Article, error) {
 func (s *Service) Find(ctx context.Context, id int) (*Article, error) {
 	a, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "find article")
+		return nil, fmt.Errorf("find article: %w", err)
 	}
 	return a, nil
 }
@@ -73,14 +73,14 @@ func (s *Service) Find(ctx context.Context, id int) (*Article, error) {
 // Update updates a article.
 func (s *Service) Update(ctx context.Context, id int, f *Form) (*Article, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater validate")
+		return nil, fmt.Errorf("validater validate: %w", err)
 	}
 
 	claims, _ := auth.FromContext(ctx)
 
 	a, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "find article")
+		return nil, fmt.Errorf("find article: %w", err)
 	}
 
 	a.UserID = claims.User.ID
@@ -89,7 +89,7 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*Article, error)
 	a.Body = f.Body
 
 	if err := s.Repository.Update(ctx, id, a); err != nil {
-		return nil, errors.Wrap(err, "update article")
+		return nil, fmt.Errorf("update article: %w", err)
 	}
 
 	return a, nil
@@ -99,11 +99,11 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*Article, error)
 func (s *Service) Delete(ctx context.Context, id int) error {
 	art, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "find article")
+		return fmt.Errorf("find article: %w", err)
 	}
 
 	if err := s.Repository.Delete(ctx, art.ID); err != nil {
-		return errors.Wrap(err, "delete category")
+		return fmt.Errorf("delete category: %w", err)
 	}
 
 	return nil
@@ -113,7 +113,7 @@ func (s *Service) Delete(ctx context.Context, id int) error {
 func (s *Service) List(ctx context.Context) (*Articles, error) {
 	var articles Articles
 	if err := s.Repository.List(ctx, &articles); err != nil {
-		return nil, errors.Wrap(err, "list of articles")
+		return nil, fmt.Errorf("list of articles: %w", err)
 	}
 
 	return &articles, nil

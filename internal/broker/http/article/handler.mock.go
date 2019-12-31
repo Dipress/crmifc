@@ -6,10 +6,11 @@ package article
 
 import (
 	context "context"
-	article "github.com/dipress/crmifc/internal/article"
-	gomock "github.com/golang/mock/gomock"
 	http "net/http"
 	reflect "reflect"
+
+	article "github.com/dipress/crmifc/internal/article"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockHandler is a mock of Handler interface

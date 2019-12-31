@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/dipress/crmifc/internal/category"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 )
 
 // CategoryRepository holds CRUD actions.
@@ -32,7 +32,7 @@ const createCategoryQuery = `INSERT INTO
 func (r *CategoryRepository) Create(ctx context.Context, f *category.NewCategory, cat *category.Category) error {
 	if err := r.db.QueryRowContext(ctx, createCategoryQuery, f.Name).
 		Scan(&cat.ID, &cat.Name, &cat.CreatedAt, &cat.UpdatedAt); err != nil {
-		return errors.Wrap(err, "query context scan")
+		return fmt.Errorf("query context scan: %w", err)
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func (r *CategoryRepository) Find(ctx context.Context, id int) (*category.Catego
 		if err == sql.ErrNoRows {
 			return nil, category.ErrNotFound
 		}
-		return nil, errors.Wrap(err, "query row scan")
+		return nil, fmt.Errorf("query row scan: %w", err)
 	}
 
 	return &cat, nil
@@ -61,7 +61,7 @@ const updateCategoryQuery = `UPDATE categories SET name=:name, updated_at=now() 
 func (r *CategoryRepository) Update(ctx context.Context, id int, cat *category.Category) error {
 	stmt, err := r.db.PrepareNamed(updateCategoryQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -73,7 +73,7 @@ func (r *CategoryRepository) Update(ctx context.Context, id int, cat *category.C
 			return category.ErrNotFound
 		}
 
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ const deleteCategoryQuery = `DELETE FROM categories WHERE id=:id`
 func (r *CategoryRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteCategoryQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -96,7 +96,7 @@ func (r *CategoryRepository) Delete(ctx context.Context, id int) error {
 			return category.ErrNotFound
 		}
 
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 
 	return nil
@@ -108,14 +108,14 @@ const listCategoryQuery = `SELECT * FROM categories`
 func (r *CategoryRepository) List(ctx context.Context, cat *category.Categories) error {
 	rows, err := r.db.QueryxContext(ctx, listCategoryQuery)
 	if err != nil {
-		return errors.Wrap(err, "query rows")
+		return fmt.Errorf("query rows: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var c category.Category
 		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt); err != nil {
-			return errors.Wrap(err, "categories query row scan on loop")
+			return fmt.Errorf("categories query row scan on loop: %w", err)
 		}
 
 		cat.Categories = append(cat.Categories, c)

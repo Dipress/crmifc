@@ -6,10 +6,11 @@ package user
 
 import (
 	context "context"
-	user "github.com/dipress/crmifc/internal/user"
-	gomock "github.com/golang/mock/gomock"
 	http "net/http"
 	reflect "reflect"
+
+	user "github.com/dipress/crmifc/internal/user"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockHandler is a mock of Handler interface

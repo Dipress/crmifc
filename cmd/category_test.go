@@ -67,7 +67,7 @@ func TestCategoryCreate(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -159,7 +159,7 @@ func TestFindCategory(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -244,7 +244,7 @@ func TestUpdateCategory(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -334,7 +334,7 @@ func TestDeleteCategory(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -420,7 +420,7 @@ func TestListCategory(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

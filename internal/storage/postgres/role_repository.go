@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/dipress/crmifc/internal/role"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 )
 
 // RoleRepository holds CRUD actions.
@@ -29,7 +29,7 @@ const createRoleQuery = `INSERT INTO roles (name) VALUES ($1) RETURNING id, name
 func (r *RoleRepository) Create(ctx context.Context, f *role.NewRole, rol *role.Role) error {
 	if err := r.db.QueryRowContext(ctx, createRoleQuery, f.Name).
 		Scan(&rol.ID, &rol.Name, &rol.CreatedAt, &rol.UpdatedAt); err != nil {
-		return errors.Wrap(err, "query context scan")
+		return fmt.Errorf("query context scan: %w", err)
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func (r *RoleRepository) Find(ctx context.Context, id int) (*role.Role, error) {
 		if err == sql.ErrNoRows {
 			return nil, role.ErrNotFound
 		}
-		return nil, errors.Wrap(err, "query row scan")
+		return nil, fmt.Errorf("query row scan: %w", err)
 	}
 	return &rol, nil
 }
@@ -56,7 +56,7 @@ func (r *RoleRepository) Update(ctx context.Context, id int, rl *role.Role) erro
 
 	stmt, err := r.db.PrepareNamed(updateRoleQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -67,7 +67,7 @@ func (r *RoleRepository) Update(ctx context.Context, id int, rl *role.Role) erro
 		if err == sql.ErrNoRows {
 			return role.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ const deleteRoleQuery = `DELETE FROM roles WHERE id=:id`
 func (r *RoleRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteRoleQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -88,7 +88,7 @@ func (r *RoleRepository) Delete(ctx context.Context, id int) error {
 		if err == sql.ErrNoRows {
 			return role.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 	return nil
 }
@@ -99,14 +99,14 @@ const listRoleQuery = `SELECT * FROM roles`
 func (r *RoleRepository) List(ctx context.Context, roles *role.Roles) error {
 	rows, err := r.db.QueryxContext(ctx, listRoleQuery)
 	if err != nil {
-		return errors.Wrap(err, "query rows")
+		return fmt.Errorf("query rows: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var rl role.Role
 		if err := rows.Scan(&rl.ID, &rl.Name, &rl.CreatedAt, &rl.UpdatedAt); err != nil {
-			return errors.Wrap(err, "roles query row scan on loop")
+			return fmt.Errorf("roles query row scan on loop: %w", err)
 		}
 
 		roles.Roles = append(roles.Roles, rl)

@@ -2,12 +2,13 @@ package article
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/dipress/crmifc/internal/broker/http/handler"
@@ -42,30 +43,31 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "read body")
+		return fmt.Errorf("read body: %w", response.BadRequestResponse(w))
 	}
 
 	if err := f.UnmarshalJSON(data); err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
+		return fmt.Errorf("unmarshal json: %w", response.BadRequestResponse(w))
 	}
 
 	article, err := h.Create(r.Context(), &f)
 	if err != nil {
-		switch v := errors.Cause(err).(type) {
-		case validation.Errors:
-			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
+		var vErr validation.Errors
+		switch {
+		case errors.As(err, vErr):
+			return fmt.Errorf("validation response: %w", response.UnprocessabeEntityResponse(w, vErr))
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "create article")
+			return fmt.Errorf("create article: %w", response.InternalServerErrorResponse(w))
 		}
 	}
 
 	data, err = article.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return fmt.Errorf("marshal json: %w", response.InternalServerErrorResponse(w))
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+		return fmt.Errorf("write response: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil
@@ -82,26 +84,26 @@ func (f FindHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+		return fmt.Errorf("convert id query param to int: %v: %w", err, response.BadRequestResponse(w))
 	}
 
 	a, err := f.Find(r.Context(), id)
 	if err != nil {
-		switch errors.Cause(err) {
-		case article.ErrNotFound:
-			return errors.Wrap(response.NotFoundResponse(w), "find")
+		switch {
+		case errors.Is(err, article.ErrNotFound):
+			return fmt.Errorf("find: %w", response.NotFoundResponse(w))
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "find article")
+			return fmt.Errorf("find article: %w", response.InternalServerErrorResponse(w))
 		}
 	}
 
 	data, err := a.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return fmt.Errorf("marshal json: %w", response.InternalServerErrorResponse(w))
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+		return fmt.Errorf("write response: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil
@@ -117,36 +119,37 @@ func (h UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+		return fmt.Errorf("convert id query param to int: %v: %w", err, response.BadRequestResponse(w))
 	}
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "read body")
+		return fmt.Errorf("read body: %w", response.BadRequestResponse(w))
 	}
 
 	var f article.Form
 	if err := f.UnmarshalJSON(data); err != nil {
-		return errors.Wrap(response.BadRequestResponse(w), "unmarshal json")
+		return fmt.Errorf("unmarshal json: %w", response.BadRequestResponse(w))
 	}
 
 	art, err := h.Update(r.Context(), id, &f)
 	if err != nil {
-		switch v := errors.Cause(err).(type) {
-		case validation.Errors:
-			return errors.Wrap(response.UnprocessabeEntityResponse(w, v), "validation response")
+		var vErr validation.Errors
+		switch {
+		case errors.As(err, vErr):
+			return fmt.Errorf("validation response: %w", response.UnprocessabeEntityResponse(w, vErr))
 		default:
-			return errors.Wrap(response.InternalServerErrorResponse(w), "update article")
+			return fmt.Errorf("update article: %w", response.InternalServerErrorResponse(w))
 		}
 	}
 
 	data, err = art.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return fmt.Errorf("marshal json: %w", response.InternalServerErrorResponse(w))
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+		return fmt.Errorf("write response: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil
@@ -163,11 +166,11 @@ func (h DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		return errors.Wrapf(response.BadRequestResponse(w), "convert id query param to int: %v", err)
+		return fmt.Errorf("convert id query param to int: %v: %w", err, response.BadRequestResponse(w))
 	}
 
 	if err := h.Delete(r.Context(), id); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "delete article")
+		return fmt.Errorf("delete article: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil
@@ -182,16 +185,16 @@ type ListHandler struct {
 func (h ListHandler) Handle(w http.ResponseWriter, r *http.Request) error {
 	articles, err := h.List(r.Context())
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "list of articles")
+		return fmt.Errorf("list of articles: %w", response.InternalServerErrorResponse(w))
 	}
 
 	data, err := articles.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "marshal json")
+		return fmt.Errorf("marshal json: %w", response.InternalServerErrorResponse(w))
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(response.InternalServerErrorResponse(w), "write response")
+		return fmt.Errorf("write response: %w", response.InternalServerErrorResponse(w))
 	}
 
 	return nil

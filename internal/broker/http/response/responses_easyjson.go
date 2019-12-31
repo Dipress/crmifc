@@ -75,22 +75,12 @@ func easyjson559270aeEncodeGithubComDipressCrmifcInternalBrokerHttpResponse(out 
 	_ = first
 	{
 		const prefix string = ",\"message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Message))
 	}
 	{
 		const prefix string = ",\"errors\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Errors == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -172,12 +162,7 @@ func easyjson559270aeEncodeGithubComDipressCrmifcInternalBrokerHttpResponse1(out
 	_ = first
 	{
 		const prefix string = ",\"message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Message))
 	}
 	out.RawByte('}')

@@ -2,12 +2,12 @@ package docker
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -31,7 +31,7 @@ func NewPostgres(pool *dockertest.Pool) (*PostgresDocker, error) {
 		"POSTGRES_DB=test",
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "start postgres")
+		return nil, fmt.Errorf("start postgres: %w", err)
 	}
 
 	purge := func() {
@@ -64,7 +64,7 @@ func NewPostgres(pool *dockertest.Pool) (*PostgresDocker, error) {
 	select {
 	case err := <-errChan:
 		purge()
-		return nil, errors.Wrap(err, "check connection")
+		return nil, fmt.Errorf("check connection: %w", err)
 	case <-time.After(dockerStartWait):
 		purge()
 		return nil, errors.New("timeout on checking postgres connection")

@@ -66,7 +66,7 @@ func TestRoleCreate(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -143,7 +143,7 @@ func TestFindRole(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -218,7 +218,7 @@ func TestUpdateRole(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -295,7 +295,7 @@ func TestDeleteRole(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -371,7 +371,7 @@ func TestListRole(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

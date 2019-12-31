@@ -1,10 +1,10 @@
 package response
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/dipress/crmifc/internal/validation"
-	"github.com/pkg/errors"
 )
 
 // easyjson -all responses.go
@@ -37,11 +37,11 @@ func BadRequestResponse(w http.ResponseWriter) error {
 
 	data, err := badRequestBody.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return fmt.Errorf("marshal json: %w", err)
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return fmt.Errorf("write response: %w", err)
 	}
 
 	return nil
@@ -53,11 +53,11 @@ func InternalServerErrorResponse(w http.ResponseWriter) error {
 
 	data, err := internalServerErrorBody.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return fmt.Errorf("marshal json: %w", err)
 	}
 
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return fmt.Errorf("write response: %w", err)
 	}
 
 	return nil
@@ -69,10 +69,10 @@ func NotFoundResponse(w http.ResponseWriter) error {
 
 	data, err := notFoundBody.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return fmt.Errorf("marshal json: %w", err)
 	}
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return fmt.Errorf("write response: %w", err)
 	}
 	return nil
 }
@@ -83,10 +83,10 @@ func UnauthorizedResponse(w http.ResponseWriter) error {
 
 	data, err := unauthorizedBody.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return fmt.Errorf("marshal json: %w", err)
 	}
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return fmt.Errorf("write response: %w", err)
 	}
 	return nil
 }
@@ -107,10 +107,10 @@ func UnprocessabeEntityResponse(w http.ResponseWriter, ers validation.Errors) er
 
 	data, err := ver.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return fmt.Errorf("marshal json: %w", err)
 	}
 	if _, err := w.Write(data); err != nil {
-		return errors.Wrap(err, "write response")
+		return fmt.Errorf("write response: %w", err)
 	}
 
 	return nil

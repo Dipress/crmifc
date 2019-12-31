@@ -2,8 +2,7 @@ package category
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // go:generate mockgen -source=service.go -package=category -destination=service.mock.go
@@ -40,7 +39,7 @@ func NewService(r Repository, v Validater) *Service {
 // Create creates a category.
 func (s *Service) Create(ctx context.Context, f *Form) (*Category, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater validate")
+		return nil, fmt.Errorf("validater validate: %w", err)
 	}
 
 	var nc NewCategory
@@ -48,7 +47,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Category, error) {
 
 	var cat Category
 	if err := s.Repository.Create(ctx, &nc, &cat); err != nil {
-		return nil, errors.Wrap(err, "repository create category")
+		return nil, fmt.Errorf("repository create category: %w", err)
 	}
 
 	return &cat, nil
@@ -58,7 +57,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Category, error) {
 func (s *Service) Find(ctx context.Context, id int) (*Category, error) {
 	c, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "repository find")
+		return nil, fmt.Errorf("repository find: %w", err)
 	}
 
 	return c, nil
@@ -67,18 +66,18 @@ func (s *Service) Find(ctx context.Context, id int) (*Category, error) {
 // Update updates a category.
 func (s *Service) Update(ctx context.Context, id int, f *Form) (*Category, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater validate")
+		return nil, fmt.Errorf("validater validate: %w", err)
 	}
 
 	cat, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "repository find category")
+		return nil, fmt.Errorf("repository find category: %w", err)
 	}
 
 	cat.Name = f.Name
 
 	if err := s.Repository.Update(ctx, id, cat); err != nil {
-		return nil, errors.Wrap(err, "update category")
+		return nil, fmt.Errorf("update category: %w", err)
 	}
 
 	return cat, nil
@@ -88,11 +87,11 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*Category, error
 func (s *Service) Delete(ctx context.Context, id int) error {
 	cat, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "find category")
+		return fmt.Errorf("find category: %w", err)
 	}
 
 	if err := s.Repository.Delete(ctx, cat.ID); err != nil {
-		return errors.Wrap(err, "delete category")
+		return fmt.Errorf("delete category: %w", err)
 	}
 
 	return nil
@@ -102,7 +101,7 @@ func (s *Service) Delete(ctx context.Context, id int) error {
 func (s *Service) List(ctx context.Context) (*Categories, error) {
 	var categories Categories
 	if err := s.Repository.List(ctx, &categories); err != nil {
-		return nil, errors.Wrap(err, "list of categories")
+		return nil, fmt.Errorf("list of categories: %w", err)
 	}
 
 	return &categories, nil
