@@ -2,8 +2,7 @@ package role
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // go:generate mockgen -source=service.go -package=role -destination=service.mock.go
@@ -40,7 +39,7 @@ func NewService(r Repository, v Validater) *Service {
 // Create creates a role.
 func (s *Service) Create(ctx context.Context, f *Form) (*Role, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater validate")
+		return nil, fmt.Errorf("validater validate: %w", err)
 	}
 
 	var nr NewRole
@@ -48,7 +47,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Role, error) {
 
 	var rol Role
 	if err := s.Repository.Create(ctx, &nr, &rol); err != nil {
-		return nil, errors.Wrap(err, "repository create role")
+		return nil, fmt.Errorf("repository create role: %w", err)
 	}
 	return &rol, nil
 }
@@ -57,7 +56,7 @@ func (s *Service) Create(ctx context.Context, f *Form) (*Role, error) {
 func (s *Service) Find(ctx context.Context, id int) (*Role, error) {
 	r, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "repository find")
+		return nil, fmt.Errorf("repository find: %w", err)
 	}
 	return r, nil
 }
@@ -65,18 +64,18 @@ func (s *Service) Find(ctx context.Context, id int) (*Role, error) {
 // Update updates a role.
 func (s *Service) Update(ctx context.Context, id int, f *Form) (*Role, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validater validate")
+		return nil, fmt.Errorf("validater validate: %w", err)
 	}
 
 	rl, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "repository find role")
+		return nil, fmt.Errorf("repository find role: %w", err)
 	}
 
 	rl.Name = f.Name
 
 	if err := s.Repository.Update(ctx, id, rl); err != nil {
-		return nil, errors.Wrap(err, "update role")
+		return nil, fmt.Errorf("update role: %w", err)
 	}
 	return rl, nil
 }
@@ -85,11 +84,11 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*Role, error) {
 func (s *Service) Delete(ctx context.Context, id int) error {
 	rl, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "find role")
+		return fmt.Errorf("find role: %w", err)
 	}
 
 	if err := s.Repository.Delete(ctx, rl.ID); err != nil {
-		return errors.Wrap(err, "delete role")
+		return fmt.Errorf("delete role: %w", err)
 	}
 	return nil
 }
@@ -98,7 +97,7 @@ func (s *Service) Delete(ctx context.Context, id int) error {
 func (s *Service) List(ctx context.Context) (*Roles, error) {
 	var roles Roles
 	if err := s.Repository.List(ctx, &roles); err != nil {
-		return nil, errors.Wrap(err, "list of roles")
+		return nil, fmt.Errorf("list of roles: %w", err)
 	}
 	return &roles, nil
 }

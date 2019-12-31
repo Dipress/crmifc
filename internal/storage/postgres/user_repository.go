@@ -3,12 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/dipress/crmifc/internal/auth"
-	"github.com/dipress/crmifc/internal/role"
 	"github.com/dipress/crmifc/internal/user"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -38,7 +37,7 @@ const createUserQuery = `INSERT INTO
 func (r *UserRepository) Create(ctx context.Context, f *user.NewUser, usr *user.User) error {
 	if err := r.db.QueryRowContext(ctx, createUserQuery, f.Username, f.Email, f.PasswordHash, f.RoleID).
 		Scan(&usr.ID, &usr.Role.ID, &usr.Username, &usr.Email, &usr.CreatedAt, &usr.UpdatedAt); err != nil {
-		return errors.Wrap(err, "query context scan")
+		return fmt.Errorf("query context scan: %w", err)
 	}
 	return nil
 }
@@ -58,9 +57,9 @@ func (r *UserRepository) Find(ctx context.Context, id int) (*user.User, error) {
 			&u.Role.ID,
 		); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, role.ErrNotFound
+			return nil, user.ErrNotFound
 		}
-		return nil, errors.Wrap(err, "query row scan")
+		return nil, fmt.Errorf("query row scan: %w", err)
 	}
 	return &u, nil
 }
@@ -81,7 +80,7 @@ const updateUserQuery = `
 func (r *UserRepository) Update(ctx context.Context, id int, u *user.User) error {
 	stmt, err := r.db.PrepareNamed(updateUserQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -95,7 +94,7 @@ func (r *UserRepository) Update(ctx context.Context, id int, u *user.User) error
 		if err == sql.ErrNoRows {
 			return user.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 	return nil
 }
@@ -106,7 +105,7 @@ const deleteUserQuery = `DELETE FROM users WHERE id=:id`
 func (r *UserRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteUserQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -116,7 +115,7 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
 		if err == sql.ErrNoRows {
 			return user.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 	return nil
 }
@@ -127,7 +126,7 @@ const uniqueUsernameQuery = `SELECT COUNT(*) FROM users WHERE username = $1`
 func (r *UserRepository) UniqueUsername(ctx context.Context, username string) error {
 	var c int
 	if err := r.db.QueryRowContext(ctx, uniqueUsernameQuery, username).Scan(&c); err != nil {
-		return errors.Wrap(err, "scan error")
+		return fmt.Errorf("scan error: %w", err)
 	}
 
 	if c > 0 {
@@ -143,7 +142,7 @@ const uniqueEmailQuery = `SELECT COUNT(*) FROM users WHERE email = $1`
 func (r *UserRepository) UniqueEmail(ctx context.Context, email string) error {
 	var c int
 	if err := r.db.QueryRowContext(ctx, uniqueEmailQuery, email).Scan(&c); err != nil {
-		return errors.Wrap(err, "scan error")
+		return fmt.Errorf("scan error: %w", err)
 	}
 
 	if c > 0 {
@@ -189,7 +188,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "scan error")
+		return nil, fmt.Errorf("scan error: %w", err)
 	}
 
 	return &usr, nil
@@ -212,7 +211,7 @@ const listUsersQuery = `
 func (r *UserRepository) List(ctx context.Context, usr *user.Users) error {
 	rows, err := r.db.QueryxContext(ctx, listUsersQuery)
 	if err != nil {
-		return errors.Wrap(err, "query rows")
+		return fmt.Errorf("query rows: %w", err)
 	}
 	defer rows.Close()
 
@@ -227,7 +226,7 @@ func (r *UserRepository) List(ctx context.Context, usr *user.Users) error {
 			&user.Role.ID,
 			&user.Role.Name,
 		); err != nil {
-			return errors.Wrap(err, "users query row scan on loop")
+			return fmt.Errorf("users query row scan on loop: %w", err)
 		}
 
 		usr.Users = append(usr.Users, user)

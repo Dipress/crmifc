@@ -66,7 +66,7 @@ func TestUserCreate(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -152,7 +152,7 @@ func TestFindUser(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -228,7 +228,7 @@ func TestUpdateUser(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -310,7 +310,7 @@ func TestDeleteUser(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -386,7 +386,7 @@ func TestListUser(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

@@ -1,6 +1,8 @@
 package schema
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 // Seed runs the set of seed-data queries against db. The queries are ran in a
 // transaction and rolled back if any fail.

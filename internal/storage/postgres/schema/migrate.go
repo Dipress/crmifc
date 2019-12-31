@@ -2,11 +2,11 @@ package schema
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database/postgres"
 	bindata "github.com/mattes/migrate/source/go-bindata"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -21,11 +21,11 @@ const (
 func Migrate(db *sql.DB) error {
 	m, err := newMigration(db)
 	if err != nil {
-		return errors.Wrap(err, "new migration")
+		return fmt.Errorf("new migration: %w", err)
 	}
 
 	if err := m.Up(); err != nil {
-		return errors.Wrap(err, "migrate schema")
+		return fmt.Errorf("migrate schema: %w", err)
 	}
 
 	return nil
@@ -35,7 +35,7 @@ func newMigration(db *sql.DB) (*migrate.Migrate, error) {
 	r := bindata.Resource(AssetNames(), Asset)
 	s, err := bindata.WithInstance(r)
 	if err != nil {
-		return nil, errors.Wrap(err, "prepare source instance")
+		return nil, fmt.Errorf("prepare source instance: %w", err)
 	}
 
 	cfg := postgres.Config{
@@ -44,12 +44,12 @@ func newMigration(db *sql.DB) (*migrate.Migrate, error) {
 
 	d, err := postgres.WithInstance(db, &cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "prepare database instance")
+		return nil, fmt.Errorf("prepare database instance: %w", err)
 	}
 
 	m, err := migrate.NewWithInstance(source, s, database, d)
 	if err != nil {
-		return nil, errors.Wrap(err, "prepare migrate instance")
+		return nil, fmt.Errorf("prepare migrate instance: %w", err)
 	}
 
 	return m, nil

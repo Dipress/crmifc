@@ -3,12 +3,12 @@ package auth
 import (
 	"context"
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/dipress/crmifc/internal/user"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -39,7 +39,7 @@ func NewClaims(email string, now time.Time, expires time.Duration) Claims {
 // Valid is called during the parsing of a token.
 func (c Claims) Valid() error {
 	if err := c.StandardClaims.Valid(); err != nil {
-		return errors.Wrap(err, "validating standard claims")
+		return fmt.Errorf("validating standard claims: %w", err)
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ func NewAuthenticator(key *rsa.PrivateKey, keyID, algorithm string, publicKeyFun
 		return nil, errors.New("keyID cannot be blank")
 	}
 	if jwt.GetSigningMethod(algorithm) == nil {
-		return nil, errors.Errorf("unknown algorithm %v", algorithm)
+		return nil, fmt.Errorf("unknown algorithm %v", algorithm)
 	}
 
 	// Create the token parser to use. The algorithm used to sign the JWT must be
@@ -130,7 +130,7 @@ func (a *Authenticator) GenerateToken(ctx context.Context, claims jwt.Claims) (s
 
 	str, err := tkn.SignedString(a.privateKey)
 	if err != nil {
-		return "", errors.Wrap(err, "signing token")
+		return "", fmt.Errorf("signing token: %w", err)
 	}
 
 	return str, nil
@@ -159,7 +159,7 @@ func (a *Authenticator) ParseClaims(ctx context.Context, tknStr string) (Claims,
 	var claims Claims
 	tkn, err := a.parser.ParseWithClaims(tknStr, &claims.StandardClaims, f)
 	if err != nil {
-		return Claims{}, errors.Wrap(err, "parsing token")
+		return Claims{}, fmt.Errorf("parsing token: %w", err)
 	}
 
 	if !tkn.Valid {
@@ -168,7 +168,7 @@ func (a *Authenticator) ParseClaims(ctx context.Context, tknStr string) (Claims,
 
 	user, err := a.Repository.FindByEmail(ctx, claims.Subject)
 	if err != nil {
-		return Claims{}, errors.Wrap(err, "find user by email")
+		return Claims{}, fmt.Errorf("find user by email: %w", err)
 	}
 
 	claims.User.ID = user.ID

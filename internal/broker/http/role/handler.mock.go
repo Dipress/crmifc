@@ -6,10 +6,11 @@ package role
 
 import (
 	context "context"
-	role "github.com/dipress/crmifc/internal/role"
-	gomock "github.com/golang/mock/gomock"
 	http "net/http"
 	reflect "reflect"
+
+	role "github.com/dipress/crmifc/internal/role"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockHandler is a mock of Handler interface

@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/dipress/crmifc/internal/article"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 )
 
 // ArticleRepository holds CRUD actions for article.
@@ -40,7 +40,7 @@ func (r *ArticleRepository) Create(ctx context.Context, f *article.NewArticle, a
 			&art.CreatedAt,
 			&art.UpdatedAt,
 		); err != nil {
-		return errors.Wrap(err, "query context scan")
+		return fmt.Errorf("query context scan: %w", err)
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (r *ArticleRepository) Find(ctx context.Context, id int) (*article.Article,
 			return nil, article.ErrNotFound
 		}
 
-		return nil, errors.Wrap(err, "query row scan")
+		return nil, fmt.Errorf("query row scan: %w", err)
 	}
 
 	return &a, nil
@@ -77,7 +77,7 @@ const updateArticleQuery = `UPDATE articles SET user_id=:user_id, category_id=:c
 func (r *ArticleRepository) Update(ctx context.Context, id int, a *article.Article) error {
 	stmt, err := r.db.PrepareNamed(updateArticleQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -91,7 +91,7 @@ func (r *ArticleRepository) Update(ctx context.Context, id int, a *article.Artic
 		if err == sql.ErrNoRows {
 			return article.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ const deleteArticleQuery = `DELETE FROM articles WHERE id=:id`
 func (r *ArticleRepository) Delete(ctx context.Context, id int) error {
 	stmt, err := r.db.PrepareNamed(deleteArticleQuery)
 	if err != nil {
-		return errors.Wrap(err, "prepare named")
+		return fmt.Errorf("prepare named: %w", err)
 	}
 	defer stmt.Close()
 
@@ -112,7 +112,7 @@ func (r *ArticleRepository) Delete(ctx context.Context, id int) error {
 		if err == sql.ErrNoRows {
 			return article.ErrNotFound
 		}
-		return errors.Wrap(err, "exec context")
+		return fmt.Errorf("exec context: %w", err)
 	}
 
 	return nil
@@ -124,7 +124,7 @@ const listArticleQuery = `SELECT * FROM articles`
 func (r *ArticleRepository) List(ctx context.Context, articles *article.Articles) error {
 	rows, err := r.db.QueryxContext(ctx, listArticleQuery)
 	if err != nil {
-		return errors.Wrap(err, "query rows")
+		return fmt.Errorf("query rows: %w", err)
 	}
 	defer rows.Close()
 
@@ -139,7 +139,7 @@ func (r *ArticleRepository) List(ctx context.Context, articles *article.Articles
 			&a.CreatedAt,
 			&a.UpdatedAt,
 		); err != nil {
-			return errors.Wrap(err, "articles query row scan on loop")
+			return fmt.Errorf("articles query row scan on loop: %w", err)
 		}
 
 		articles.Articles = append(articles.Articles, a)

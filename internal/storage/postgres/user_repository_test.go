@@ -298,7 +298,7 @@ func TestFindUserByEmail(t *testing.T) {
 			Name: "Member",
 		}
 		var r role.Role
-		err :=roleRepo.Create(ctx, &nr, &r)
+		err := roleRepo.Create(ctx, &nr, &r)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -307,7 +307,7 @@ func TestFindUserByEmail(t *testing.T) {
 			Username:     "username4",
 			Email:        "username4@example.com",
 			PasswordHash: "$2y$12$gwoUXq7kCxNcucd.eFxOp.vJYYmo6917fSGuuEowfyNf3E8KySrWC",
-			RoleID: r.ID,
+			RoleID:       r.ID,
 		}
 
 		var usr user.User

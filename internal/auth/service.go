@@ -2,13 +2,15 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/dipress/crmifc/internal/kit/auth"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dipress/crmifc/internal/user"
-	"github.com/pkg/errors"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -71,7 +73,7 @@ func NewService(r UserRepository, t TokenGenerator, exp time.Duration) *Service 
 func (s *Service) Authenticate(ctx context.Context, email, password string, t *Token) error {
 	user, err := s.UserRepository.FindByEmail(ctx, email)
 	if err != nil {
-		return errors.Wrap(err, "find user by email")
+		return fmt.Errorf("find user by email: %w", err)
 	}
 
 	// Compare the provided password with the saved hash. Use the bcrypt
@@ -86,7 +88,7 @@ func (s *Service) Authenticate(ctx context.Context, email, password string, t *T
 
 	tknStr, err := s.GenerateToken(ctx, claims.StandardClaims)
 	if err != nil {
-		return errors.Wrap(err, "generate token")
+		return fmt.Errorf("generate token: %w", err)
 	}
 	t.Token = tknStr
 

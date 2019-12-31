@@ -2,12 +2,13 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dipress/crmifc/internal/user"
-	"github.com/pkg/errors"
+
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )

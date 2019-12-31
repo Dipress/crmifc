@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -44,20 +44,20 @@ func NewService(r Repository, v Validater) *Service {
 // Create creates a user.
 func (s *Service) Create(ctx context.Context, f *Form, u *User) error {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return errors.Wrap(err, "validater validate")
+		return fmt.Errorf("validater validate: %w", err)
 	}
 
 	if err := s.Repository.UniqueUsername(ctx, f.Username); err != nil {
-		return errors.Wrap(err, "unique username")
+		return fmt.Errorf("unique username: %w", err)
 	}
 
 	if err := s.Repository.UniqueEmail(ctx, f.Email); err != nil {
-		return errors.Wrap(err, "unique email")
+		return fmt.Errorf("unique email: %w", err)
 	}
 
 	pw, err := bcrypt.GenerateFromPassword([]byte(f.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return errors.Wrap(err, "generating password hash")
+		return fmt.Errorf("generating password hash: %w", err)
 	}
 
 	nu := NewUser{
@@ -68,7 +68,7 @@ func (s *Service) Create(ctx context.Context, f *Form, u *User) error {
 	}
 
 	if err := s.Repository.Create(ctx, &nu, u); err != nil {
-		return errors.Wrap(err, "create user")
+		return fmt.Errorf("create user: %w", err)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (s *Service) Create(ctx context.Context, f *Form, u *User) error {
 func (s *Service) Find(ctx context.Context, id int) (*User, error) {
 	u, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "find user")
+		return nil, fmt.Errorf("find user: %w", err)
 	}
 	return u, nil
 }
@@ -86,17 +86,17 @@ func (s *Service) Find(ctx context.Context, id int) (*User, error) {
 // Update updates a user by id.
 func (s *Service) Update(ctx context.Context, id int, f *Form) (*User, error) {
 	if err := s.Validater.Validate(ctx, f); err != nil {
-		return nil, errors.Wrap(err, "validate user")
+		return nil, fmt.Errorf("validate user: %w", err)
 	}
 
 	u, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "find user")
+		return nil, fmt.Errorf("find user: %w", err)
 	}
 
 	pw, err := bcrypt.GenerateFromPassword([]byte(f.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.Wrap(err, "generating password hash")
+		return nil, fmt.Errorf("generating password hash: %w", err)
 	}
 
 	u.Username = f.Username
@@ -105,7 +105,7 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*User, error) {
 	u.Role.ID = f.RoleID
 
 	if err := s.Repository.Update(ctx, id, u); err != nil {
-		return nil, errors.Wrap(err, "update user")
+		return nil, fmt.Errorf("update user: %w", err)
 	}
 
 	return u, nil
@@ -115,11 +115,11 @@ func (s *Service) Update(ctx context.Context, id int, f *Form) (*User, error) {
 func (s *Service) Delete(ctx context.Context, id int) error {
 	u, err := s.Repository.Find(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "find user")
+		return fmt.Errorf("find user: %w", err)
 	}
 
 	if err := s.Repository.Delete(ctx, u.ID); err != nil {
-		return errors.Wrap(err, "delete user")
+		return fmt.Errorf("delete user: %w", err)
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func (s *Service) Delete(ctx context.Context, id int) error {
 func (s *Service) List(ctx context.Context) (*Users, error) {
 	var users Users
 	if err := s.Repository.List(ctx, &users); err != nil {
-		return nil, errors.Wrap(err, "list of users")
+		return nil, fmt.Errorf("list of users: %w", err)
 	}
 
 	return &users, nil

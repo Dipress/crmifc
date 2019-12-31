@@ -69,7 +69,7 @@ func TestArticleCreate(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -162,7 +162,7 @@ func TestFindArticle(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -254,7 +254,7 @@ func TestUpdateArticle(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -347,7 +347,7 @@ func TestDeleteArticle(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 
@@ -439,7 +439,7 @@ func TestArticleList(t *testing.T) {
 
 		services := setupServices(db, authenticator)
 
-		s := setupServer(lis.Addr().String(), services, authenticator)
+		s := setupServer(lis.Addr().String(), nil, services, authenticator)
 		go s.Serve(lis)
 		defer s.Close()
 

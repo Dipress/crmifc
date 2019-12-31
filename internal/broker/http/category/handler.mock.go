@@ -6,10 +6,11 @@ package category
 
 import (
 	context "context"
-	category "github.com/dipress/crmifc/internal/category"
-	gomock "github.com/golang/mock/gomock"
 	http "net/http"
 	reflect "reflect"
+
+	category "github.com/dipress/crmifc/internal/category"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockHandler is a mock of Handler interface
